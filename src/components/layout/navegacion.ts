@@ -32,15 +32,7 @@ export const SECCIONES: readonly Seccion[] = [
 ];
 
 /** Entradas que todavía no tienen pantalla. Cada fase saca de acá las suyas. */
-const SIN_PANTALLA: readonly string[] = [
-  "/proyectos",
-  "/mis-tareas",
-  "/calendario",
-  "/carga",
-  "/horas",
-  "/analitica",
-  "/configuracion",
-];
+const SIN_PANTALLA: readonly string[] = ["/calendario", "/carga", "/horas", "/analitica"];
 
 export function seccionesVisibles(): Seccion[] {
   return SECCIONES.filter((s) => !SIN_PANTALLA.includes(s.href));

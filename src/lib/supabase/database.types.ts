@@ -307,8 +307,16 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "custom_access_token_hook":
+            "aceptar_invitacion":
+{ Args: { "p_token_hash": string,"p_usuario": string }; Returns: string
+                           },
+"custom_access_token_hook":
 { Args: { "event": Json }; Returns: Json
+                           },
+"invitacion_por_token":
+{ Args: { "p_token_hash": string }; Returns: {
+              "aceptada_en": string,"email": string,"id": string,"organizacion_nombre": string,"revocada_en": string,"rol": string,"usuario_existe": boolean,"vence_en": string
+            }[]
                            }
           }
           Enums: {

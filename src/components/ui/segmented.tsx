@@ -12,7 +12,6 @@ export interface OpcionSegmentada<T extends string> {
 
 /**
  * Control segmentado (Apple HIG): para elegir UNA vista entre pocas opciones relacionadas.
- * El segmento elegido es uno de los tres lugares con neumorfismo (globals.css).
  * Se maneja con el dedo, el mouse o el teclado (flechas, inicio y fin).
  */
 export function Segmentado<T extends string>({
@@ -69,7 +68,7 @@ export function Segmentado<T extends string>({
             onClick={() => onChange(o.valor)}
             onKeyDown={(e) => alTeclear(e, i)}
             className={cn(
-              "flex min-h-9 flex-1 shrink-0 items-center justify-center gap-1.5 rounded-[10px] px-2.5 text-[13px] font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring sm:px-3 pointer-coarse:min-h-11 pointer-coarse:text-[14px]",
+              "flex min-h-11 flex-1 shrink-0 items-center justify-center gap-1.5 rounded-[10px] px-2.5 text-[13px] font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring sm:px-3 pointer-coarse:text-[14px]",
               activa ? "border bg-card text-foreground" : "text-muted-foreground active:bg-accent",
             )}
           >

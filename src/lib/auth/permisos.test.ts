@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  puedeBorrarProyecto,
   puedeConfigurar,
+  puedeMoverTarea,
   puedeCrearProyecto,
   puedeEditarCamposTarea,
   puedeGestionarProyecto,
@@ -22,6 +24,17 @@ describe("permisos por rol", () => {
     expect(regla("pm", false)).toBe(false);
     expect(regla("colaborador", true)).toBe(false);
     expect(regla("colaborador", false)).toBe(false);
+  });
+
+  it("mueve una tarea quien gestiona o a quien está asignada", () => {
+    expect(puedeMoverTarea(true, null, "yo")).toBe(true);
+    expect(puedeMoverTarea(false, "yo", "yo")).toBe(true);
+    expect(puedeMoverTarea(false, "otra", "yo")).toBe(false);
+    expect(puedeMoverTarea(false, null, "yo")).toBe(false);
+  });
+
+  it("borra proyectos solo Admin", () => {
+    expect(ROLES.filter(puedeBorrarProyecto)).toEqual(["admin"]);
   });
 
   it("configura solo Admin", () => {

@@ -2,13 +2,13 @@
 
 Cada fase, al cerrar, actualiza este archivo. Es lo único que la sesión siguiente lee de la anterior: tiene que alcanzar.
 
-**Fase siguiente:** 3 · `docs/fases/fase_3_core_ui_bento.md`
+**Fase siguiente:** 4 · `docs/fases/fase_4_calendar_realtime.md`
 
 | Fase | Estado | Fecha | Notas para la que sigue |
 |---|---|---|---|
 | 1. Setup y auth | Terminada | 2026-11-01 | Supabase local en puertos 553xx (`npx.cmd supabase start`). El hook `custom_access_token` quedó comentado en `config.toml`: se prende cuando exista la función. `database.types.ts` tiene el esquema vacío: regeneralo con `npm run db:tipos`, que hoy solo pide `public`. `src/lib/data/comun.ts` solo tiene `Resultado` y `Ref`. La sesión se valida con `obtenerUsuario()` de `src/lib/auth/sesion.ts`. El marco todavía no recibe rol ni empresa |
 | 2. Esquema y RLS | Terminada | 2026-11-01 | Ver "Disponible desde la fase 2". `obtenerContexto()` da usuario, empresa y rol; sin empresa activa manda a `/sin-empresa`. `navegacion.ts` todavía no filtra por rol. `src/lib/data/comun.ts` sigue con `Resultado` y `Ref`: sumá lo demás ahí, no lo pises. **Dependencias:** nunca `npm install`; ver `README.md` |
-| 3. UI base y Bento | Pendiente | | |
+| 3. UI base y Bento | Terminada | 2026-11-02 | Ver "Disponible desde la fase 3". Comentarios: completá `SeccionComentarios` en `src/components/tareas/secciones-reservadas.tsx`. El tablero ya tiene `useOptimistic` en `vistas-proyecto.tsx`: realtime tiene que refrescar esos datos, no pisarlos. Sumá tarjetas solo en `TARJETAS_INICIO` |
 | 4. Calendario y realtime | Pendiente | | |
 | 5. Horas y analítica | Pendiente | | |
 
@@ -29,6 +29,21 @@ Cada fase, al cerrar, actualiza este archivo. Es lo único que la sesión siguie
 - **Una empresa con tareas no se puede borrar:** `tareas` no tiene cascada desde `proyectos`, tal como pide el plan. Hoy nadie borra empresas.
 - **Tablas nuevas:** `npm run test:sql` corta si una tabla de `public` nace sin RLS. Los permisos por defecto ya no dan nada a `anon` ni `TRUNCATE` a `authenticated`.
 - **`supabase start` no aplica migraciones nuevas** sobre un volumen existente: corré `npx.cmd supabase db reset`. Si el arranque se cae porque falta un esquema, usá `npx.cmd supabase stop --no-backup`.
+
+## Disponible desde la fase 3
+
+**RPC, solo con la clave secreta:** `invitacion_por_token(hash)` y `aceptar_invitacion(hash, usuario)`.
+
+**Piezas para reusar:** `src/lib/fechas.ts` (`fechaDesdeBase`, `hoyEnZona`, `diasLaborales`), `src/lib/data/errores.ts` (`errorDeBase`, `SIN_FILAS`), `EnlaceTarea` y `navegarSinRecargar` (`?tarea=` sin ir al servidor), `Selector` (lista de 44 px), TanStack Query en `providers.tsx`.
+
+**Trampas para las fases que siguen:**
+
+- **Un update o delete que el RLS bloquea no da error: afecta 0 filas.** Pedí la fila con `.select()` y devolvé `SIN_FILAS`.
+- **Una tarea de un proyecto borrado sigue con `eliminado_en` nulo.** Filtrá también por el proyecto: usá `SELECT_TAREA` con `.is("proyecto.eliminado_en", null)`.
+- **`miembros` deja ver todas las empresas de la persona:** filtrá siempre por `organizacion_id`.
+- **La clave secreta no puede actualizar `tareas` ni `proyectos`:** `service_role` no tiene permiso sobre el esquema `app`, que usan sus triggers. Para preparar un test, usá un Admin con sesión.
+- **Los errores de Supabase no son `Error`:** son objetos con `message`. `mensajeDeError` ya los entiende; un mensaje nuevo de un trigger se suma a `MENSAJES_DE_LA_BASE`.
+- **Usuarios en e2e:** usá `crearPersona` de `e2e/ayudas.ts`. Los del seed los cambian otros tests en paralelo.
 
 ## Desvíos respecto del plan
 
@@ -60,9 +75,33 @@ Lo que se hizo distinto a lo que dice la fase, y por qué.
 - **`/sin-empresa`** es una ruta nueva, y `/ingresar` manda ahí después de `/inicio` si no hay empresa activa.
 - **`npm run lock:regenerar` y `npm ci`, corrige la fase 1.** Con estas dependencias, npm 11 no genera de una un lock estable con los binarios: el lock del commit de la fase 1 rechazaba `npm ci`, y un `npm install` borraba el binario de `rolldown` y dejaba a Vitest sin arrancar. El script no suma paquetes, y la regeneración no cambió ninguna versión salvo agregar `pg`.
 
+**Fase 3**
+
+- **`comun.ts` no se copió entero:** se sumaron `ClienteSupabase` y `PersonaRef`, como pedía la fase 2. No hay paginación por cursor porque nada la usa todavía.
+- **`data-table.tsx` no se copió:** depende del módulo de vistas del CRM. `tabla-proyectos` y `lista-tareas` usan TanStack Table directo.
+- **Firmas con un parámetro de más:** `listarMiembros(db, organizacionId)`, por la trampa de arriba. `listarProyectos` y `obtenerProyecto` reciben `hoy`, para la salud, y `listarMisTareas` recibe el usuario.
+- **`moverTarea` acepta `posicion` opcional:** sin ella va al final de la columna. Lo usan el menú "Mover a..." y Mis tareas, que no tienen a las vecinas a mano.
+- **Funciones de más:** `editarTareasEnLote`, `buscarTareas`, `listarPersonasDeProyecto`, `listarInvitacionesPendientes` y `configuracion/acciones.ts`.
+- **Dos RPC nuevas para invitaciones:** alta, empresa activa y marca de usada van en una transacción, y dos pedidos con el mismo token no pasan los dos. El mail se compara con `auth.users`, porque `perfiles.email` lo edita su dueño.
+- **Una invitación no le baja el rol a quien ya es miembro activo.** A quien estaba desactivado lo reactiva con el rol nuevo. Es la única forma de reactivar a alguien.
+- **Mis tareas e inicio no muestran tareas abiertas de proyectos terminados o cancelados:** quedarían vencidas para siempre. Decisión propia, la fase no lo dice.
+- **Salud:** un proyecto terminado o cancelado siempre da "Al día", y sin tareas cerca del objetivo da "En riesgo".
+- **Sin asignar ocupa todo el ancho:** es la quinta chica y dejaba un hueco.
+- **Mi semana, sábado y domingo:** muestra la semana que viene.
+- **Cambio de estado en un toque:** avanza al paso siguiente (Empezar, A revisión, Terminar).
+- **Panel de tarea sin `pie` fijo:** Guardar va al final del contenido, porque la fase 4 suma comentarios debajo.
+- **Bucket `avatares`:** sin SVG, porque puede traer scripts. La lectura pública es por URL, sin política de listado, para que nadie enumere los ids. El logo de la empresa va en la carpeta del Admin que lo sube: la fase no pedía otro bucket.
+- **Color de acento:** se rechaza si no llega a AA contra el blanco.
+- **Control de estados a 375 px en 2×2:** en una fila, "Hecha" quedaba cortada.
+- **`sign_in_sign_ups = 1000` en `config.toml`, solo desarrollo:** con 30 cada 5 minutos, los e2e se quedaban sin ingresos.
+- **Sin e2e a 375 px:** teclado y paleta (el tablero a 375 no arrastra) y el aviso de movimiento fallido, porque usa el mismo camino que en escritorio.
+- **Corrige la fase 1:** el e2e de recuperar contraseña usa una persona propia, porque le cambiaba la clave a `colab3` mientras otro test ingresaba. `DialogContent` pasó a `z-[51]`: al reabrir un diálogo enseguida, el fondo podía quedar encima y bloquear los clics.
+- **Precisión de `posicion`:** pasa por un número de JS. Tras unas 50 inserciones seguidas en el mismo hueco, dos tareas empatan; se desempata por id.
+
 ## Pendientes abiertos
 
 - Producción sería en una VM de Oracle. [FALTA: definir la base de datos de producción.] No entra en las 5 fases.
 - `docs/fases/fase_1_setup_auth.md` sigue diciendo `[auth.email] enable_signup = false`. No sirve: ver "Desvíos".
 - [FALTA: SMTP de producción, para recuperar contraseña.]
+- La tarjeta "Proyectos" del inicio muestra hasta 8 activos, sin enlace a "ver todos" adentro. Lo mismo "Próximos plazos": 8 tareas.
 - [FALTA: quién es el primer Admin real y qué proyectos se cargan al arrancar.]

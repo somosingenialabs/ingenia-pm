@@ -63,7 +63,7 @@ function DialogContent({
         className={cn(
           // Apple HIG: en celular el diálogo es una hoja que sube desde abajo (con la barra de inicio
           // respetada); desde "sm" vuelve a ser una ventana centrada.
-          "fixed inset-x-0 bottom-0 z-50 grid max-h-[92svh] w-full gap-4 overflow-y-auto overscroll-contain rounded-t-3xl bg-popover p-4 pb-[calc(env(safe-area-inset-bottom)+16px)] text-sm text-popover-foreground ring-1 ring-foreground/10 duration-200 outline-none data-open:animate-in data-open:fade-in-0 data-open:slide-in-from-bottom-16 data-closed:animate-out data-closed:fade-out-0 data-closed:slide-out-to-bottom-16 sm:inset-x-auto sm:top-1/2 sm:bottom-auto sm:left-1/2 sm:max-h-[85svh] sm:max-w-sm sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:pb-4 sm:data-open:slide-in-from-bottom-0 sm:data-open:zoom-in-95 sm:data-closed:slide-out-to-bottom-0 sm:data-closed:zoom-out-95",
+          "fixed inset-x-0 bottom-0 z-[51] grid max-h-[92svh] w-full gap-4 overflow-y-auto overscroll-contain rounded-t-3xl bg-popover p-4 pb-[calc(env(safe-area-inset-bottom)+16px)] text-sm text-popover-foreground ring-1 ring-foreground/10 duration-200 outline-none data-open:animate-in data-open:fade-in-0 data-open:slide-in-from-bottom-16 data-closed:animate-out data-closed:fade-out-0 data-closed:slide-out-to-bottom-16 sm:inset-x-auto sm:top-1/2 sm:bottom-auto sm:left-1/2 sm:max-h-[85svh] sm:max-w-sm sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:pb-4 sm:data-open:slide-in-from-bottom-0 sm:data-open:zoom-in-95 sm:data-closed:slide-out-to-bottom-0 sm:data-closed:zoom-out-95",
           className
         )}
         {...props}

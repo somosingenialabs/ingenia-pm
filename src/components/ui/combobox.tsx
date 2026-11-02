@@ -115,7 +115,7 @@ export function Combobox({
       aria-invalid={invalido || undefined}
       disabled={deshabilitado}
       onClick={esCelular ? () => setAbierto(true) : undefined}
-      className={cn("h-9 w-full justify-between font-normal pointer-coarse:h-11", className)}
+      className={cn("h-11 w-full justify-between font-normal", className)}
     >
       <span className={cn("truncate", !valor && "text-muted-foreground")}>{valor?.nombre ?? placeholder}</span>
       <ChevronsUpDown className="size-4 shrink-0 opacity-60" aria-hidden />

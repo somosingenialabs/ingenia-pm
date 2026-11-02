@@ -46,7 +46,7 @@ Son personas ficticias. Contraseña de desarrollo de todos: `prueba1234`. Para v
 | `admin.b@prueba.test` | Ramiro Ortiz | Admin, empresa B |
 | `colab1.b@prueba.test` | Paula Medina | Colaborador, B |
 
-No hay registro público: las personas entran por invitación (fase 3).
+No hay registro público: las personas entran por invitación, desde Configuración > Miembros. El enlace se copia y se manda por donde quieran, sin SMTP.
 
 ## Verificar
 
@@ -60,4 +60,4 @@ npm run build
 npm run e2e
 ```
 
-`npm run e2e` usa el build y Supabase local, y la primera vez pide `npx playwright install chromium`.
+`npm run e2e` usa el build y Supabase local, y la primera vez pide `npx playwright install chromium`. `npm test` también necesita Supabase local: una parte corre las consultas contra el seed. Los e2e dejan datos de prueba, y los tests SQL cuentan filas del seed: por eso el orden de arriba arranca con `db reset`.

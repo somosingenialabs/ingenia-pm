@@ -24,6 +24,16 @@ export function puedeEditarCamposTarea(rol: Rol, esMiembro: boolean): boolean {
   return puedeGestionarProyecto(rol, esMiembro);
 }
 
+/** Mover una tarea o cambiarle estado y descripción: quien gestiona el proyecto, o a quien está asignada. */
+export function puedeMoverTarea(gestiona: boolean, asignadoId: string | null, usuarioId: string): boolean {
+  return gestiona || asignadoId === usuarioId;
+}
+
+/** Borrar un proyecto, además de lo que puede cualquier gestor. */
+export function puedeBorrarProyecto(rol: Rol): boolean {
+  return rol === "admin";
+}
+
 /** Miembros, invitaciones y datos de la empresa. */
 export function puedeConfigurar(rol: Rol): boolean {
   return rol === "admin";

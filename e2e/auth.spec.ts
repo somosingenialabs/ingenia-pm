@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { API_SUPABASE, CLAVE_DESARROLLO, cambiarActivo, elementosChicos, enlaceDelUltimoMail, ingresar, variableLocal } from "./ayudas";
+import { API_SUPABASE, CLAVE_DESARROLLO, cambiarActivo, crearPersona, elementosChicos, enlaceDelUltimoMail, ingresar, variableLocal } from "./ayudas";
 
 // Cada proyecto de Playwright (escritorio, celular) corre todo. El mail cambia por test para
 // que los recorridos en paralelo no se pisen.
@@ -63,8 +63,9 @@ test("/recuperar responde lo mismo exista o no el mail", async ({ page }) => {
   }
 });
 
-test("el enlace del mail lleva a /nueva-clave y la contraseña nueva queda andando", async ({ page, request }, info) => {
-  const email = info.project.name === "celular" ? "colab3.a@prueba.test" : "colab2.a@prueba.test";
+test("el enlace del mail lleva a /nueva-clave y la contraseña nueva queda andando", async ({ page, request }) => {
+  // Persona propia: este test le cambia la contraseña, y otros ingresan en paralelo con las del seed.
+  const { email } = await crearPersona(request, "recuperar");
 
   await page.goto("/recuperar");
   await page.getByLabel("Mail").fill(email);

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { ArrowDownRight, ArrowUpRight, Minus, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -35,6 +36,9 @@ export function BentoCard({
   variacion,
   estado = "listo",
   onReintentar,
+  textoVacio = "Todavía no hay datos para este período.",
+  accionError,
+  href,
   children,
   className,
 }: {
@@ -45,14 +49,22 @@ export function BentoCard({
   variacion?: Variacion;
   estado?: EstadoBento;
   onReintentar?: () => void;
+  textoVacio?: string;
+  /** Acción del estado de error cuando la tarjeta se arma en el servidor y no puede pasar una función. */
+  accionError?: ReactNode;
+  /** La tarjeta entera lleva a este lugar. */
+  href?: string;
   children?: ReactNode;
   className?: string;
 }) {
-  return (
+  const tarjeta = (
     <section
       aria-label={titulo}
       aria-busy={estado === "cargando"}
-      className={cn("flex flex-col gap-3 rounded-2xl border bg-card p-4 text-card-foreground", CLASES_TAMANO[tamano], className)}
+      className={cn(
+        "flex flex-col gap-3 rounded-2xl border bg-card p-4 text-card-foreground",
+        href ? "h-full transition-colors group-hover/tarjeta:bg-accent" : [CLASES_TAMANO[tamano], className],
+      )}
     >
       <header className="space-y-0.5">
         <h2 className="text-sm font-semibold">{titulo}</h2>
@@ -67,7 +79,7 @@ export function BentoCard({
       )}
 
       {estado === "vacio" && (
-        <p className="flex flex-1 items-center text-sm text-muted-foreground">Todavía no hay datos para este período.</p>
+        <p className="flex flex-1 items-center text-sm text-muted-foreground">{textoVacio}</p>
       )}
 
       {estado === "error" && (
@@ -78,6 +90,7 @@ export function BentoCard({
               <RefreshCw aria-hidden /> Reintentar
             </Button>
           )}
+          {accionError}
         </div>
       )}
 
@@ -93,6 +106,13 @@ export function BentoCard({
         </>
       )}
     </section>
+  );
+
+  if (!href) return tarjeta;
+  return (
+    <Link href={href} className={cn("group/tarjeta rounded-2xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50", CLASES_TAMANO[tamano], className)}>
+      {tarjeta}
+    </Link>
   );
 }
 
