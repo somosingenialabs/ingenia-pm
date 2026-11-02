@@ -1,0 +1,60 @@
+# Ingenia PM
+
+Gestión de proyectos B2B: tareas, calendario, horas y métricas. Next.js + Supabase.
+
+## Requisitos
+
+- Node.js 22.12 o más
+- Docker Desktop abierto (Supabase local corre en contenedores)
+
+## Levantarlo
+
+```bash
+npm install
+npx supabase start
+```
+
+En Windows con PowerShell usá `npm.cmd` y `npx.cmd`.
+
+Copiá `.env.example` a `.env.local` y completalo con lo que muestra `npx supabase status`:
+
+| Variable | Dato de `supabase status` |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Project URL (`http://127.0.0.1:55321`) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Publishable key |
+| `SUPABASE_SECRET_KEY` | Secret key. Solo servidor, nunca en un componente de cliente |
+
+```bash
+npm run dev
+```
+
+La app queda en <http://localhost:3100>. Los puertos de Supabase son 553xx para convivir con `crm-base`: Studio en <http://127.0.0.1:55323>, y los mails de desarrollo (por ejemplo, el de recuperar contraseña) en <http://127.0.0.1:55324>.
+
+## Usuarios de prueba
+
+Son personas ficticias. Contraseña de desarrollo de todos: `prueba1234`. Para volver al estado inicial: `npx supabase db reset`.
+
+| Mail | Nombre | Rol desde la fase 2 |
+|---|---|---|
+| `admin.a@prueba.test` | Lucía Fernández | Admin, empresa A |
+| `pm1.a@prueba.test` | Martín Gómez | PM, A |
+| `pm2.a@prueba.test` | Carla Ruiz | PM, A |
+| `colab1.a@prueba.test` | Diego Paz | Colaborador, A |
+| `colab2.a@prueba.test` | Sofía Ledesma | Colaborador, A |
+| `colab3.a@prueba.test` | Tomás Aguirre | Colaborador, A |
+| `admin.b@prueba.test` | Ramiro Ortiz | Admin, empresa B |
+| `colab1.b@prueba.test` | Paula Medina | Colaborador, B |
+
+No hay registro público: las personas entran por invitación (fase 3).
+
+## Verificar
+
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run build
+npm run e2e
+```
+
+`npm run e2e` usa el build y Supabase local, y la primera vez pide `npx playwright install chromium`.
