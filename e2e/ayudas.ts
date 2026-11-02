@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { expect, type APIRequestContext, type Page } from "@playwright/test";
 
 // Usuarios del seed (supabase/seed/10_usuarios.sql). Contraseña de desarrollo: ver README.
@@ -28,6 +29,24 @@ export async function enlaceDelUltimoMail(request: APIRequestContext, email: str
     expect(enlace).not.toBe("");
   }).toPass({ timeout: 15_000 });
   return enlace;
+}
+
+/** Variable de .env.local: Playwright no la carga sola. */
+export function variableLocal(nombre: string) {
+  const env = readFileSync(".env.local", "utf8");
+  return env.match(new RegExp(`^${nombre}=(.+)$`, "m"))?.[1]?.trim() ?? "";
+}
+
+export const API_SUPABASE = "http://127.0.0.1:55321";
+
+/** Activa o desactiva a una persona con la clave secreta. Solo para preparar un test. */
+export async function cambiarActivo(request: APIRequestContext, usuarioId: string, activo: boolean) {
+  const clave = variableLocal("SUPABASE_SECRET_KEY");
+  const respuesta = await request.patch(`${API_SUPABASE}/rest/v1/miembros?usuario_id=eq.${usuarioId}`, {
+    headers: { apikey: clave, Authorization: `Bearer ${clave}` },
+    data: { activo },
+  });
+  expect(respuesta.ok()).toBe(true);
 }
 
 const MINIMO_TACTIL = 44;

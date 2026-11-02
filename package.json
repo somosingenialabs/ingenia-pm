@@ -14,7 +14,9 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "e2e": "playwright test",
-    "db:tipos": "supabase gen types typescript --local --schema public > src/lib/supabase/database.types.ts"
+    "db:tipos": "supabase gen types typescript --local --schema public,analitica > src/lib/supabase/database.types.ts",
+    "test:sql": "node --env-file-if-exists=.env.local scripts/test-sql.mjs",
+    "lock:regenerar": "node scripts/regenerar-lock.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
@@ -43,6 +45,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.2",
+    "pg": "^8.23.1",
     "shadcn": "^4.22.0",
     "supabase": "^2.121.0",
     "tailwindcss": "^4",

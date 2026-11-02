@@ -10,11 +10,11 @@ Gestión de proyectos B2B: tareas, calendario, horas y métricas. Next.js + Supa
 ## Levantarlo
 
 ```bash
-npm install
+npm ci
 npx supabase start
 ```
 
-En Windows con PowerShell usá `npm.cmd` y `npx.cmd`.
+En Windows con PowerShell usá `npm.cmd` y `npx.cmd`. Usá `npm ci` y no `npm install`: con estas dependencias, npm 11 borra el binario de Windows de `rolldown` y Vitest deja de arrancar. Para agregar una dependencia: sumala a `package.json`, corré `npm run lock:regenerar` y después `npm ci`.
 
 Copiá `.env.example` a `.env.local` y completalo con lo que muestra `npx supabase status`:
 
@@ -23,6 +23,7 @@ Copiá `.env.example` a `.env.local` y completalo con lo que muestra `npx supaba
 | `NEXT_PUBLIC_SUPABASE_URL` | Project URL (`http://127.0.0.1:55321`) |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Publishable key |
 | `SUPABASE_SECRET_KEY` | Secret key. Solo servidor, nunca en un componente de cliente |
+| `DATABASE_URL` | Ya viene en `.env.example`. Solo para `npm run test:sql` |
 
 ```bash
 npm run dev
@@ -50,6 +51,8 @@ No hay registro público: las personas entran por invitación (fase 3).
 ## Verificar
 
 ```bash
+npx supabase db reset
+npm run test:sql
 npm run lint
 npm run typecheck
 npm test

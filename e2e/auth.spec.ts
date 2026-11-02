@@ -1,6 +1,5 @@
-import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
-import { CLAVE_DESARROLLO, elementosChicos, enlaceDelUltimoMail, ingresar } from "./ayudas";
+import { API_SUPABASE, CLAVE_DESARROLLO, cambiarActivo, elementosChicos, enlaceDelUltimoMail, ingresar, variableLocal } from "./ayudas";
 
 // Cada proyecto de Playwright (escritorio, celular) corre todo. El mail cambia por test para
 // que los recorridos en paralelo no se pisen.
@@ -29,7 +28,8 @@ test("un mail que no existe muestra el mismo error", async ({ page }) => {
 
 test("ingresa a /inicio y al salir vuelve a /ingresar", async ({ page }) => {
   await ingresar(page, "pm1.a@prueba.test");
-  await expect(page.getByText("Hola, pm1.a@prueba.test")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Hola, Martín Gómez" })).toBeVisible();
+  await expect(page.getByText("Empresa A · PM")).toBeVisible();
 
   await page.getByRole("button", { name: "Menú de usuario" }).click();
   await page.getByRole("menuitem", { name: "Salir" }).click();
@@ -88,10 +88,8 @@ test("el enlace del mail lleva a /nueva-clave y la contraseña nueva queda andan
 });
 
 test("no hay registro público", async ({ request }) => {
-  const env = readFileSync(".env.local", "utf8");
-  const clave = env.match(/^NEXT_PUBLIC_SUPABASE_ANON_KEY=(.+)$/m)?.[1]?.trim() ?? "";
-  const respuesta = await request.post("http://127.0.0.1:55321/auth/v1/signup", {
-    headers: { apikey: clave },
+  const respuesta = await request.post(`${API_SUPABASE}/auth/v1/signup`, {
+    headers: { apikey: variableLocal("NEXT_PUBLIC_SUPABASE_ANON_KEY") },
     data: { email: "registro.nuevo@prueba.test", password: "una-clave-cualquiera" },
   });
   expect(respuesta.status()).toBe(422);
@@ -103,13 +101,62 @@ test("/nueva-clave sin sesión ofrece pedir otro enlace", async ({ page }) => {
   await expect(page.getByRole("link", { name: "Pedir un enlace nuevo" })).toBeVisible();
 });
 
+test("/inicio muestra el nombre, la empresa y el rol reales", async ({ page }) => {
+  await ingresar(page, "admin.a@prueba.test");
+  await expect(page.getByRole("heading", { name: "Hola, Lucía Fernández" })).toBeVisible();
+  await expect(page.getByText("Empresa A · Admin")).toBeVisible();
+});
+
+// Sin el hook, org_id no llega al token y todo el RLS devuelve vacío. Los tests SQL simulan
+// el token: este pasa por Auth de verdad.
+test("el token real trae la empresa y el RLS responde con ella", async ({ request }) => {
+  const apikey = variableLocal("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  const ingreso = await request.post(`${API_SUPABASE}/auth/v1/token?grant_type=password`, {
+    headers: { apikey },
+    data: { email: "colab3.a@prueba.test", password: CLAVE_DESARROLLO },
+  });
+  expect(ingreso.ok()).toBe(true);
+  const { access_token: token } = (await ingreso.json()) as { access_token: string };
+  const datos = JSON.parse(Buffer.from(token.split(".")[1]!, "base64url").toString()) as { org_id?: string };
+  expect(datos.org_id).toBe("10000000-0000-4000-a000-000000000000");
+
+  const headers = { apikey, Authorization: `Bearer ${token}` };
+  const proyectos = await (await request.get(`${API_SUPABASE}/rest/v1/proyectos?select=id`, { headers })).json();
+  expect(proyectos).toHaveLength(2);
+
+  // Sin sesión, la API no da nada.
+  const sinSesion = await request.get(`${API_SUPABASE}/rest/v1/proyectos?select=id`, { headers: { apikey } });
+  expect(sinSesion.ok()).toBe(false);
+});
+
+test("sin empresa activa, avisa y deja salir", async ({ page, request }, info) => {
+  const [email, id] =
+    info.project.name === "celular"
+      ? ["colab1.a@prueba.test", "00000000-0000-4000-a000-000000000004"]
+      : ["colab1.b@prueba.test", "00000000-0000-4000-b000-000000000002"];
+  await cambiarActivo(request, id, false);
+  try {
+    await page.goto("/ingresar");
+    await page.getByLabel("Mail").fill(email);
+    await page.getByLabel("Contraseña").fill(CLAVE_DESARROLLO);
+    await page.getByRole("button", { name: "Ingresar" }).click();
+    await expect(page).toHaveURL(/\/sin-empresa$/);
+    await expect(page.getByText("Tu usuario no tiene una empresa activa. Pedile acceso a un administrador.")).toBeVisible();
+    expect(await elementosChicos(page), "/sin-empresa").toEqual([]);
+    await page.getByRole("button", { name: "Salir" }).click();
+    await expect(page).toHaveURL(/\/ingresar$/);
+  } finally {
+    await cambiarActivo(request, id, true);
+  }
+});
+
 test("todo control interactivo mide 44 px o más", async ({ page }) => {
   for (const ruta of ["/ingresar", "/recuperar", "/nueva-clave"]) {
     await page.goto(ruta);
     expect(await elementosChicos(page), ruta).toEqual([]);
   }
 
-  await ingresar(page, "colab1.a@prueba.test");
+  await ingresar(page, "admin.b@prueba.test");
   expect(await elementosChicos(page), "/inicio").toEqual([]);
 
   await page.getByRole("button", { name: "Menú de usuario" }).click();

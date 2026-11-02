@@ -1,18 +1,17 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { FolderKanban } from "lucide-react";
 import { EstadoVacio } from "@/components/estado/estado-vacio";
 import { PageHeader } from "@/components/layout/page-header";
-import { obtenerUsuario } from "@/lib/auth/sesion";
+import { obtenerContexto } from "@/lib/auth/contexto";
+import { NOMBRE_ROL } from "@/lib/auth/permisos";
 
 export const metadata: Metadata = { title: "Inicio" };
 
 export default async function InicioPage() {
-  const usuario = await obtenerUsuario();
-  if (!usuario) redirect("/ingresar");
+  const { usuario, organizacion, rol } = await obtenerContexto();
   return (
     <>
-      <PageHeader titulo="Inicio" descripcion={`Hola, ${usuario.email}`} />
+      <PageHeader titulo={`Hola, ${usuario.nombre}`} descripcion={`${organizacion.nombre} · ${NOMBRE_ROL[rol]}`} />
       <EstadoVacio
         icono={<FolderKanban />}
         titulo="Todavía no hay nada para mostrar"
