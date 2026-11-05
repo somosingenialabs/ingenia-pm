@@ -15,6 +15,61 @@ export type Database = {
 { Args: { "p_desde": string,"p_hasta": string,"p_proyecto"?: string }; Returns: {
               "capacidad": number,"horas_asignadas": number,"horas_atrasadas": number,"semana": string,"tareas_sin_estimar": number,"tareas_sin_fecha": number,"usuario_id": string
             }[]
+                           },
+"consumo_presupuesto":
+{ Args: { "p_desde": string,"p_hasta": string,"p_proyectos"?: (string)[],"p_usuarios"?: (string)[] }; Returns: {
+              "avance": number,"horas": number,"n": number,"porcentaje": number,"presupuestadas": number,"proyecto_id": string
+            }[]
+                           },
+"cuellos_de_botella":
+{ Args: { "p_desde": string,"p_hasta": string,"p_proyectos"?: (string)[],"p_usuarios"?: (string)[] }; Returns: {
+              "estado": string,"mediana_horas": number,"n": number,"tareas_ahora": number,"trabadas": number
+            }[]
+                           },
+"cumplimiento_plazos":
+{ Args: { "p_desde": string,"p_hasta": string,"p_proyectos"?: (string)[],"p_usuarios"?: (string)[] }; Returns: {
+              "a_tiempo": number,"n": number,"porcentaje": number,"tarde": number
+            }[]
+                           },
+"horas_por_periodo":
+{ Args: { "p_desde": string,"p_hasta": string,"p_proyectos"?: (string)[],"p_usuarios"?: (string)[] }; Returns: {
+              "horas": number,"n": number,"periodo": string,"proyecto_id": string,"usuario_id": string
+            }[]
+                           },
+"precision_estimacion":
+{ Args: { "p_desde": string,"p_hasta": string,"p_por"?: string,"p_proyectos"?: (string)[],"p_usuarios"?: (string)[] }; Returns: {
+              "mediana_ratio": number,"n": number,"proyecto_id": string,"usuario_id": string
+            }[]
+                           },
+"rendimiento":
+{ Args: { "p_desde": string,"p_hasta": string,"p_proyectos"?: (string)[],"p_usuarios"?: (string)[] }; Returns: {
+              "n": number,"semana": string,"tareas_hechas": number
+            }[]
+                           },
+"tareas_trabadas":
+{ Args: { "p_desde": string,"p_hasta": string,"p_proyectos"?: (string)[],"p_usuarios"?: (string)[] }; Returns: {
+              "asignado_id": string,"estado": string,"horas_en_estado": number,"proyecto_id": string,"tarea_id": string,"umbral_horas": number
+            }[]
+                           },
+"tiempo_en_estado":
+{ Args: { "p_desde": string,"p_hasta": string,"p_proyectos"?: (string)[],"p_usuarios"?: (string)[] }; Returns: {
+              "estado": string,"mediana_horas": number,"n": number,"p85_horas": number
+            }[]
+                           },
+"tiempos_de_ciclo":
+{ Args: { "p_desde": string,"p_hasta": string,"p_proyectos"?: (string)[],"p_usuarios"?: (string)[] }; Returns: {
+              "mediana_ciclo_horas": number,"mediana_lead_horas": number,"n": number,"n_ciclo": number
+            }[]
+                           },
+"trabajo_en_curso":
+{ Args: { "p_desde": string,"p_hasta": string,"p_proyectos"?: (string)[],"p_usuarios"?: (string)[] }; Returns: {
+              "en_curso": number,"en_revision": number,"n": number,"usuario_id": string
+            }[]
+                           },
+"utilizacion":
+{ Args: { "p_desde": string,"p_hasta": string,"p_proyectos"?: (string)[],"p_usuarios"?: (string)[] }; Returns: {
+              "capacidad": number,"horas": number,"n": number,"porcentaje": number,"usuario_id": string
+            }[]
                            }
           }
           Enums: {
@@ -322,9 +377,56 @@ isOneToOne: false
 "custom_access_token_hook":
 { Args: { "event": Json }; Returns: Json
                            },
+"descartar_temporizador":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
+"detener_temporizador":
+{ Args: { "p_minutos"?: number,"p_nota"?: string }; Returns: {
+              "actualizado_en": string,
+"creado_en": string,
+"fecha": string,
+"fin": string | null,
+"id": string,
+"inicio": string | null,
+"minutos": number | null,
+"nota": string | null,
+"organizacion_id": string,
+"origen": string,
+"proyecto_id": string,
+"tarea_id": string,
+"usuario_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "registros_tiempo"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "eliminar_comentario":
 { Args: { "p_id": string }; Returns: undefined
                            },
+"iniciar_temporizador":
+{ Args: { "p_tarea": string }; Returns: {
+              "actualizado_en": string,
+"creado_en": string,
+"fecha": string,
+"fin": string | null,
+"id": string,
+"inicio": string | null,
+"minutos": number | null,
+"nota": string | null,
+"organizacion_id": string,
+"origen": string,
+"proyecto_id": string,
+"tarea_id": string,
+"usuario_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "registros_tiempo"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "invitacion_por_token":
 { Args: { "p_token_hash": string }; Returns: {
               "aceptada_en": string,"email": string,"id": string,"organizacion_nombre": string,"revocada_en": string,"rol": string,"usuario_existe": boolean,"vence_en": string

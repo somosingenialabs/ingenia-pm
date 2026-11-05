@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { moverTarea } from "@/lib/data/tareas/acciones";
 import type { TareaFila } from "@/lib/data/tareas/consultas";
 import { estadoSiguiente, grupoDeTarea, NOMBRE_GRUPO, type GrupoMisTareas } from "@/lib/data/tareas/reglas";
+import { BotonTemporizador } from "@/components/tiempo/boton-temporizador";
 import { EnlaceTarea } from "./enlace-tarea";
 import { EtiquetaEstado, EtiquetaPrioridad, FechaLimite } from "./etiquetas";
 
@@ -77,6 +78,7 @@ function FilaTarea({ tarea, hoy }: { tarea: TareaFila; hoy: string }) {
           <FechaLimite tarea={tarea} hoy={hoy} />
         </div>
       </div>
+      <BotonTemporizador tareaId={tarea.id} titulo={tarea.titulo} />
       {siguiente && (
         <Button variant="outline" size="sm" disabled={pendiente} onClick={avanzar} aria-label={`${siguiente.accion}: ${tarea.titulo}`}>
           {siguiente.accion}

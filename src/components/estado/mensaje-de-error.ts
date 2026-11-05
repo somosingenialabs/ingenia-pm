@@ -24,6 +24,13 @@ const MENSAJES_DE_LA_BASE: readonly (readonly [RegExp, string])[] = [
   [/La invitaci[oó]n es para otro mail/i, "Esta invitación es para otro mail."],
   [/proyectos_organizacion_id_responsable_id_fkey/i, "El responsable tiene que ser parte de la empresa."],
   [/proyecto_miembros_pkey/i, "Esa persona ya es miembro del proyecto."],
+  [/horas con fecha futura/i, "No se pueden cargar horas en un día que todavía no llegó."],
+  [/temporizador prendido hace m[aá]s de 24 h/i, "Tenés un temporizador prendido hace más de 24 h. Detenelo y corregí los minutos."],
+  [/lleva m[aá]s de 24 h/i, "El temporizador lleva más de 24 h: decí cuántos minutos trabajaste."],
+  [/entre 1 y lo que estuvo prendido/i, "Los minutos tienen que ser entre 1 y lo que estuvo prendido."],
+  [/No hay un temporizador corriendo/i, "No hay un temporizador corriendo. Puede que lo hayas detenido en otro dispositivo."],
+  [/registros_tiempo_un_temporizador/i, "Ya tenés un temporizador corriendo. Actualizá la pantalla."],
+  [/La tarea no existe/i, "Esa tarea ya no existe, o no tenés acceso."],
 ];
 
 /**

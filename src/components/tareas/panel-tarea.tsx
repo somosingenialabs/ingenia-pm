@@ -21,7 +21,7 @@ import { navegarSinRecargar, useUrlCon } from "./enlace-tarea";
 import { FechaLimite } from "./etiquetas";
 import { FormularioTarea } from "./formulario-tarea";
 import { SeccionDependencias } from "./seccion-dependencias";
-import { SeccionTiempo } from "./secciones-reservadas";
+import { SeccionTiempo } from "@/components/tiempo/seccion-tiempo";
 import { SeccionComentarios } from "@/components/comentarios/seccion";
 import type { PersonaRef } from "@/lib/data/comun";
 
@@ -187,8 +187,9 @@ function DetalleTarea({
       )}
 
       {gestiona && <SeccionDependencias tareaId={tarea.id} proyectoId={tarea.proyecto_id} />}
+      {/* Horas antes que comentarios: el hilo puede ser largo y dejarlas muy abajo. */}
+      <SeccionTiempo tarea={{ id: tarea.id, titulo: tarea.titulo, estado: tarea.estado, horasEstimadas: tarea.horas_estimadas === null ? null : Number(tarea.horas_estimadas) }} />
       <SeccionComentarios tareaId={tarea.id} organizacionId={organizacionId} yo={yo} puedeBorrarAjenos={gestiona} />
-      <SeccionTiempo tareaId={tarea.id} />
 
       <ConfirmarAccion pendiente={confirmacion} onCerrar={() => setConfirmacion(null)} />
     </div>

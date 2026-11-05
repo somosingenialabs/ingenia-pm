@@ -18,6 +18,7 @@ import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalList
 import { CSS } from "@dnd-kit/utilities";
 import { ChevronRight, GripVertical } from "lucide-react";
 import { EnlaceTarea } from "@/components/tareas/enlace-tarea";
+import { BotonTemporizador } from "@/components/tiempo/boton-temporizador";
 import { EtiquetaBloqueada, EtiquetaPrioridad, FechaLimite, Persona } from "@/components/tareas/etiquetas";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -229,6 +230,11 @@ function CuerpoTarjeta({ tarea, hoy, agarre }: { tarea: TareaFila; hoy: string; 
           <Persona persona={tarea.asignado} />
         </div>
       </div>
+      {tarea.estado !== "hecha" && tarea.estado !== "cancelada" && (
+        <div className="-mr-2 shrink-0">
+          <BotonTemporizador tareaId={tarea.id} titulo={tarea.titulo} />
+        </div>
+      )}
     </article>
   );
 }

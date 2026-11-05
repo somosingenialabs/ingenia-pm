@@ -140,7 +140,8 @@ export function Combobox({
   return (
     <Popover open={abierto} onOpenChange={setAbierto}>
       <PopoverTrigger asChild>{disparador}</PopoverTrigger>
-      <PopoverContent align="start" className="w-(--radix-popover-trigger-width) min-w-64 p-0">
+      {/* z-[52]: por encima de DialogContent (z-[51]), para usarlo dentro de un diálogo. */}
+      <PopoverContent align="start" className="z-[52] w-(--radix-popover-trigger-width) min-w-64 p-0">
         {lista}
       </PopoverContent>
     </Popover>

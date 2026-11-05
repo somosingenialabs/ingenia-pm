@@ -10,7 +10,7 @@ Cada fase, al cerrar, actualiza este archivo. Es lo único que la sesión siguie
 | 2. Esquema y RLS | Terminada | 2026-11-01 | Ver "Disponible desde la fase 2". `obtenerContexto()` da usuario, empresa y rol; sin empresa activa manda a `/sin-empresa`. `navegacion.ts` todavía no filtra por rol. `src/lib/data/comun.ts` sigue con `Resultado` y `Ref`: sumá lo demás ahí, no lo pises. **Dependencias:** nunca `npm install`; ver `README.md` |
 | 3. UI base y Bento | Terminada | 2026-11-02 | Ver "Disponible desde la fase 3". Comentarios: completá `SeccionComentarios` en `src/components/tareas/secciones-reservadas.tsx`. El tablero ya tiene `useOptimistic` en `vistas-proyecto.tsx`: realtime tiene que refrescar esos datos, no pisarlos. Sumá tarjetas solo en `TARJETAS_INICIO` |
 | 4. Calendario y realtime | Terminada | 2026-11-04 | Ver "Disponible desde la fase 4". Horas: completá `SeccionTiempo` en `src/components/tareas/secciones-reservadas.tsx`, que es lo único que queda ahí. `analitica.carga_por_persona` ya existe en el esquema `analitica`: las métricas nuevas van al lado. Para escuchar una tabla en vivo usá `useCanalRealtime`, y sumá la tabla a la publicación `supabase_realtime` en una migración. `/horas` y `/analitica` siguen en `SIN_PANTALLA` de `navegacion.ts` |
-| 5. Horas y analítica | Pendiente | | |
+| 5. Horas y analítica | En curso | 2026-11-05 | Pasos 1 y 2 hechos, en la rama `fase-5-horas-analitica`. Ver "Fase 5 en curso" |
 
 ## Disponible desde la fase 2
 
@@ -69,6 +69,26 @@ Cada fase, al cerrar, actualiza este archivo. Es lo único que la sesión siguie
 - **Los e2e dejan personas y proyectos en la base local.** Antes de sacar capturas, `npx.cmd supabase db reset`.
 - **Vitest corre en zona `America/Argentina/Buenos_Aires`** (`vitest.config.ts`): un test de fechas que pase solo ahí no prueba otra zona.
 - **Git Bash convierte `/proyectos` en una ruta de Windows.** Usá `MSYS_NO_PATHCONV=1`.
+
+## Fase 5 en curso
+
+Se trabaja paso por paso, con el sí del usuario al terminar cada uno. Rama `fase-5-horas-analitica`, sin mergear.
+
+**Hecho:**
+
+- **Paso 1, temporizador y horas** (aprobado). Migración `20261105120000_temporizador.sql`: `iniciar_temporizador`, `detener_temporizador` y `descartar_temporizador`, con test en `supabase/tests/tiempo.test.sql`. Pantallas en `src/components/tiempo/`, datos en `src/lib/data/tiempo/`, `/horas` y e2e en `e2e/horas.spec.ts` (8 de 8).
+- **Paso 2, métricas** (falta el sí del usuario). Migración `20261105130000_metricas.sql`: las 11 funciones de `analitica`, más las ayudas `app.zona_empresa`, `app.metricas_usuarios`, `app.metricas_validar_rango`, `app.inicio_del_dia` y `app.metricas_abiertas`. Con 50.000 tareas de prueba, todas tardan menos de 500 ms (la peor, `tareas_trabadas`, ~455 ms). Se reemplazó `tarea_historial_tarea_idx` por `tarea_historial_pasos_idx`.
+
+**Decisiones del paso 2 que el usuario todavía no aprobó:** las horas de tareas canceladas cuentan en horas y utilización. El colaborador queda forzado a sus datos en las 11 funciones. `consumo_presupuesto` devuelve vacío al colaborador y usa las horas de toda la vida del proyecto. `precision_estimacion` tiene `p_por` (`usuario`, `proyecto`, `total`). `tiempos_de_ciclo` devuelve además `n_ciclo`. Un paso cuenta en el período en que terminó.
+
+**Falta:**
+
+- **Paso 3:** `supabase/seed/40_historia.sql` y `supabase/tests/metricas.test.sql`. El seed actual deja `creado_en = now()` en tareas ya completadas (lead negativo) y no tiene historial de estados: el seed nuevo lo tiene que resolver.
+- **Paso 4:** `/analitica` y las tarjetas de inicio. Sacar `/analitica` de `SIN_PANTALLA` en `navegacion.ts`: se dejó oculta hasta que exista la pantalla.
+- **Recharts:** se suma en el paso 4. Antes, arreglar `npm run lock:regenerar` o revisar el lock después (pierde los binarios de Linux y Mac).
+- **Cierre:** suite e2e completa (todavía no se corrió entera en esta fase), capturas en claro, oscuro y 375 px, y esta sección pasada a "Disponible desde la fase 5" y "Desvíos".
+
+**Desvíos del paso 1:** Analítica sigue oculta en la navegación. En el detalle de tarea, Horas va antes que Comentarios. `Combobox` pasó a `z-[52]` para funcionar dentro de un diálogo. `secciones-reservadas.tsx` se borró.
 
 ## Desvíos respecto del plan
 

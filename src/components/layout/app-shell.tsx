@@ -1,5 +1,7 @@
 import { Suspense, type ReactNode } from "react";
 import { PanelTarea } from "@/components/tareas/panel-tarea";
+import { ProveedorTiempo } from "@/components/tiempo/proveedor-tiempo";
+import { EspacioTemporizador, TemporizadorCelular, TemporizadorEncabezado } from "@/components/tiempo/temporizador-global";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import type { Contexto } from "@/lib/auth/tipos";
@@ -13,10 +15,12 @@ import { PaletaComandos } from "./paleta-comandos";
 /**
  * Marco de la aplicación. Escritorio: barra lateral colapsable (Ctrl/Cmd+B) y encabezado
  * translúcido. Celular: barra inferior. En los dos: paleta de comandos (Ctrl/Cmd+K), menú de
- * usuario con el tema y la salida, y el detalle de tarea (`?tarea=<id>`) sobre cualquier pantalla.
+ * usuario con el tema y la salida, el detalle de tarea (`?tarea=<id>`) sobre cualquier pantalla, y el
+ * temporizador si hay uno corriendo (encabezado en escritorio, sobre la barra de pestañas en el celular).
  */
 export function AppShell({ contexto, children }: { contexto: Contexto; children: ReactNode }) {
   return (
+    <ProveedorTiempo usuarioId={contexto.usuario.id} esAdmin={contexto.rol === "admin"} zonaHoraria={contexto.organizacion.zonaHoraria}>
     <SidebarProvider>
       <AcentoOrganizacion color={contexto.organizacion.colorAcento} />
       <AppSidebar />
@@ -29,15 +33,18 @@ export function AppShell({ contexto, children }: { contexto: Contexto; children:
             <img src={contexto.organizacion.logoUrl} alt="" className="size-6 shrink-0 rounded object-contain" />
           )}
           <span className="truncate texto-subtitulo text-muted-foreground">{contexto.organizacion.nombre}</span>
-          <div className="ml-auto flex items-center gap-1">
+          <div className="ml-auto flex min-w-0 items-center gap-1">
+            <TemporizadorEncabezado />
             <PaletaComandos usuarioId={contexto.usuario.id} rol={contexto.rol} />
             <MenuUsuario email={contexto.usuario.email ?? contexto.usuario.nombre} />
           </div>
         </header>
         <main className="flex min-w-0 flex-1 flex-col gap-6 p-4 pb-[calc(env(safe-area-inset-bottom)+88px)] md:p-6 md:pb-6 lg:p-8 lg:pb-8">
           {children}
+          <EspacioTemporizador />
         </main>
       </SidebarInset>
+      <TemporizadorCelular />
       <BarraPestanas />
       <Suspense fallback={null}>
         <PanelTarea
@@ -48,5 +55,6 @@ export function AppShell({ contexto, children }: { contexto: Contexto; children:
         />
       </Suspense>
     </SidebarProvider>
+    </ProveedorTiempo>
   );
 }
