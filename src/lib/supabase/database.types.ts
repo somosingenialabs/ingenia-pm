@@ -11,7 +11,11 @@ export type Database = {
             [_ in never]: never
           }
           Functions: {
-            [_ in never]: never
+            "carga_por_persona":
+{ Args: { "p_desde": string,"p_hasta": string,"p_proyecto"?: string }; Returns: {
+              "capacidad": number,"horas_asignadas": number,"horas_atrasadas": number,"semana": string,"tareas_sin_estimar": number,"tareas_sin_fecha": number,"usuario_id": string
+            }[]
+                           }
           }
           Enums: {
             [_ in never]: never
@@ -310,8 +314,16 @@ isOneToOne: false
             "aceptar_invitacion":
 { Args: { "p_token_hash": string,"p_usuario": string }; Returns: string
                            },
+"conflictos_dependencias":
+{ Args: { "p_proyecto"?: string }; Returns: {
+              "arranca_el": string,"debe_arrancar_desde": string,"depende_de_id": string,"tarea_id": string
+            }[]
+                           },
 "custom_access_token_hook":
 { Args: { "event": Json }; Returns: Json
+                           },
+"eliminar_comentario":
+{ Args: { "p_id": string }; Returns: undefined
                            },
 "invitacion_por_token":
 { Args: { "p_token_hash": string }; Returns: {

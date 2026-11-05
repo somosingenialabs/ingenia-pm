@@ -1,8 +1,8 @@
 "use client";
 
-import { useOptimistic, useState, useTransition } from "react";
+import { useEffect, useOptimistic, useRef, useState, useTransition } from "react";
 import { ListChecks, Plus } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { EstadoVacio } from "@/components/estado/estado-vacio";
 import { mensajeDeError } from "@/components/estado/mensaje-de-error";
@@ -11,6 +11,7 @@ import { FormularioTarea } from "@/components/tareas/formulario-tarea";
 import { Button } from "@/components/ui/button";
 import { HojaAdaptable } from "@/components/ui/hoja-adaptable";
 import { Segmentado } from "@/components/ui/segmented";
+import { useCanalRealtime } from "@/hooks/use-canal-realtime";
 import type { PersonaRef } from "@/lib/data/comun";
 import { crearTarea, moverTarea } from "@/lib/data/tareas/acciones";
 import type { TareaFila } from "@/lib/data/tareas/consultas";
@@ -53,6 +54,8 @@ export function VistasProyecto({
     actuales.map((t) => (t.id === m.id ? { ...t, estado: m.estado, ...(m.posicion === undefined ? {} : { posicion: m.posicion }) } : t)),
   );
 
+  const enVivo = useTareasEnVivo(proyectoId);
+
   function mover(movimiento: { id: string; estado: EstadoTarea; posicion?: number }) {
     iniciar(async () => {
       aplicar(movimiento);
@@ -92,7 +95,7 @@ export function VistasProyecto({
           texto={gestiona ? "Creá la primera y asignásela a alguien del equipo." : "Cuando se carguen tareas, las vas a ver acá."}
         />
       ) : vista === "tablero" ? (
-        <Tablero tareas={optimistas} gestiona={gestiona} usuarioId={usuarioId} hoy={hoy} onMover={mover} />
+        <Tablero tareas={optimistas} gestiona={gestiona} usuarioId={usuarioId} hoy={hoy} onMover={mover} onArrastre={enVivo.alArrastrar} />
       ) : (
         <ListaTareas
           proyectoId={proyectoId}
@@ -114,6 +117,64 @@ export function VistasProyecto({
       )}
     </>
   );
+}
+
+/** Espera para agrupar una ráfaga de cambios (un lote, varias personas a la vez) en un solo refresco. */
+const ESPERA_REFRESCO = 500;
+
+/**
+ * Tareas del proyecto en vivo. Ante un cambio, vuelve a pedir la página al servidor: la consulta
+ * es la única fuente, el payload no se mezcla con el estado. Durante un arrastre se pausa, para
+ * que la tarjeta no salte de la mano, y refresca al soltar.
+ */
+function useTareasEnVivo(proyectoId: string) {
+  const router = useRouter();
+  const arrastrando = useRef(false);
+  const pendiente = useRef(false);
+  const espera = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function refrescar() {
+    // Sin red no se refresca: router.refresh() fallaría y Next caería a una navegación completa,
+    // que sin conexión deja la página de error del navegador. Al volver la red, el hook avisa
+    // (alSincronizar) y se refresca ahí.
+    if (arrastrando.current || !navigator.onLine) {
+      pendiente.current = true;
+      return;
+    }
+    pendiente.current = false;
+    if (espera.current) clearTimeout(espera.current);
+    espera.current = setTimeout(() => {
+      if (navigator.onLine) router.refresh();
+      else pendiente.current = true;
+    }, ESPERA_REFRESCO);
+  }
+
+  useEffect(
+    () => () => {
+      if (espera.current) clearTimeout(espera.current);
+    },
+    [],
+  );
+
+  useCanalRealtime({
+    canal: `tareas:proyecto:${proyectoId}`,
+    tabla: "tareas",
+    filtro: `proyecto_id=eq.${proyectoId}`,
+    alCambiar: refrescar,
+    // También la primera vez: entre que el servidor armó la página y el canal quedó suscripto,
+    // alguien pudo cambiar una tarea, y Realtime no reenvía lo perdido.
+    alSincronizar: refrescar,
+  });
+
+  return {
+    alArrastrar(activo: boolean) {
+      arrastrando.current = activo;
+      if (!activo && pendiente.current) {
+        pendiente.current = false;
+        refrescar();
+      }
+    },
+  };
 }
 
 function HojaNuevaTarea({

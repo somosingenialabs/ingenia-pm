@@ -20,14 +20,17 @@ import { crearClienteNavegador } from "@/lib/supabase/client";
 import { navegarSinRecargar, useUrlCon } from "./enlace-tarea";
 import { FechaLimite } from "./etiquetas";
 import { FormularioTarea } from "./formulario-tarea";
-import { SeccionComentarios, SeccionTiempo } from "./secciones-reservadas";
+import { SeccionDependencias } from "./seccion-dependencias";
+import { SeccionTiempo } from "./secciones-reservadas";
+import { SeccionComentarios } from "@/components/comentarios/seccion";
+import type { PersonaRef } from "@/lib/data/comun";
 
 /**
  * Detalle de tarea en `?tarea=<id>`, sobre cualquier pantalla: panel lateral en escritorio y hoja
  * desde abajo en el celular. Lee desde el navegador, con el mismo RLS: quien no puede ver la
  * tarea recibe "no encontrada".
  */
-export function PanelTarea({ usuarioId, rol, hoy }: { usuarioId: string; rol: Rol; hoy: string }) {
+export function PanelTarea({ yo, organizacionId, rol, hoy }: { yo: PersonaRef; organizacionId: string; rol: Rol; hoy: string }) {
   const id = useSearchParams().get("tarea");
   const urlCon = useUrlCon();
   const db = crearClienteNavegador();
@@ -85,7 +88,8 @@ export function PanelTarea({ usuarioId, rol, hoy }: { usuarioId: string; rol: Ro
           key={`${tarea.id}-${consulta.dataUpdatedAt}`}
           tarea={tarea}
           personas={personas.data}
-          usuarioId={usuarioId}
+          yo={yo}
+          organizacionId={organizacionId}
           rol={rol}
           hoy={hoy}
           alCerrar={cerrar}
@@ -98,19 +102,22 @@ export function PanelTarea({ usuarioId, rol, hoy }: { usuarioId: string; rol: Ro
 function DetalleTarea({
   tarea,
   personas,
-  usuarioId,
+  yo,
+  organizacionId,
   rol,
   hoy,
   alCerrar,
 }: {
   tarea: TareaFila;
   personas: { id: string; nombre: string; avatarUrl: string | null }[];
-  usuarioId: string;
+  yo: PersonaRef;
+  organizacionId: string;
   rol: Rol;
   hoy: string;
   alCerrar: () => void;
 }) {
   const clienteConsultas = useQueryClient();
+  const usuarioId = yo.id;
   const [enviando, setEnviando] = useState(false);
   const [confirmacion, setConfirmacion] = useState<ConfirmacionPendiente | null>(null);
 
@@ -159,6 +166,8 @@ function DetalleTarea({
         alGuardar={() => {
           toast.success("Cambios guardados.");
           void clienteConsultas.invalidateQueries({ queryKey: ["tarea", tarea.id] });
+          // Si cambió una fecha, el calendario la tiene que mover.
+          void clienteConsultas.invalidateQueries({ queryKey: ["calendario"] });
         }}
       />
 
@@ -177,7 +186,8 @@ function DetalleTarea({
         </div>
       )}
 
-      <SeccionComentarios tareaId={tarea.id} />
+      {gestiona && <SeccionDependencias tareaId={tarea.id} proyectoId={tarea.proyecto_id} />}
+      <SeccionComentarios tareaId={tarea.id} organizacionId={organizacionId} yo={yo} puedeBorrarAjenos={gestiona} />
       <SeccionTiempo tareaId={tarea.id} />
 
       <ConfirmarAccion pendiente={confirmacion} onCerrar={() => setConfirmacion(null)} />

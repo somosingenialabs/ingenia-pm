@@ -14,6 +14,10 @@ import {
   listarProximosPlazos,
   listarProyectosActivos,
 } from "./inicio/consultas";
+import { listarCalendario } from "./calendario/consultas";
+import { listarTareasDeSemana, obtenerCarga } from "./carga/consultas";
+import { lunesDe } from "./carga/reglas";
+import { listarBloqueosDeProyecto, listarDependenciasDeTarea } from "./dependencias/consultas";
 import { listarMiembros } from "./miembros/consultas";
 import { listarProyectos, obtenerProyecto } from "./proyectos/consultas";
 import { buscarTareas, listarMisTareas, listarTareasDeProyecto, obtenerTarea } from "./tareas/consultas";
@@ -214,5 +218,73 @@ describe("bucket avatares", () => {
     expect(error).not.toBeNull();
     const { data } = await anon.storage.from("avatares").list(COLAB1);
     expect(data ?? []).toHaveLength(0);
+  });
+});
+
+describe("dependencias y calendario (fase 4)", () => {
+  // Seed: la 2 depende de la 1 (en curso), la 3 de la 2 (en revisión, 2 días de desfase) y la 5
+  // de la 4 (cancelada: ya no bloquea).
+  const tarea = (n: number) => `13000000-0000-4000-a000-${String(n).padStart(12, "0")}`;
+
+  it("listarBloqueosDeProyecto da solo predecesoras abiertas", async () => {
+    const db = await ingresar("pm1.a@prueba.test");
+    const bloqueos = await listarBloqueosDeProyecto(db, P1);
+    expect(bloqueos[tarea(2)]).toEqual(["Tarea de ejemplo 1"]);
+    expect(bloqueos[tarea(3)]).toEqual(["Tarea de ejemplo 2"]);
+    expect(bloqueos[tarea(5)]).toBeUndefined();
+  });
+
+  it("listarDependenciasDeTarea trae los dos lados con el desfase", async () => {
+    const db = await ingresar("pm1.a@prueba.test");
+    const deps = await listarDependenciasDeTarea(db, tarea(2));
+    expect(deps.dependeDe.map((t) => [t.id, t.desfaseDias])).toEqual([[tarea(1), 0]]);
+    expect(deps.bloquea.map((t) => [t.id, t.desfaseDias])).toEqual([[tarea(3), 2]]);
+  });
+
+  it("otra empresa no ve los bloqueos de A", async () => {
+    const db = await ingresar("admin.b@prueba.test");
+    expect(await listarBloqueosDeProyecto(db, P1)).toEqual({});
+  });
+
+  it("listarCalendario trae el período sin canceladas, y solo dependencias de lo que trajo", async () => {
+    const db = await ingresar("pm1.a@prueba.test");
+    const datos = await listarCalendario(db, { desde: sumarDias(HOY, -20), hasta: sumarDias(HOY, 20), proyectoId: P1 });
+    expect(datos.tareas.length).toBeGreaterThan(0);
+    expect(datos.tareas.every((t) => t.estado !== "cancelada" && t.proyectoId === P1)).toBe(true);
+    expect(datos.tareas.every((t) => t.fechaLimite >= sumarDias(HOY, -20))).toBe(true);
+    const ids = new Set(datos.tareas.map((t) => t.id));
+    expect(datos.dependencias.every((d) => ids.has(d.tareaId) || ids.has(d.dependeDeId))).toBe(true);
+    for (const d of datos.dependencias) expect(datos.titulos[d.tareaId] && datos.titulos[d.dependeDeId]).toBeTruthy();
+  });
+});
+
+describe("carga por persona (fase 4)", () => {
+  const lunes = lunesDe(HOY);
+
+  it("el colaborador recibe solo su fila; el PM, a todos los activos de la empresa", async () => {
+    const colab = await obtenerCarga(await ingresar("colab1.a@prueba.test"), { organizacionId: ORG, desde: lunes });
+    expect(colab.semanas).toHaveLength(8);
+    expect(colab.personas.map((p) => p.persona.id)).toEqual([COLAB1]);
+    expect(colab.personas[0]!.persona.nombre).toBe("Diego Paz");
+
+    const db = await ingresar("pm1.a@prueba.test");
+    const pm = await obtenerCarga(db, { organizacionId: ORG, desde: lunes });
+    const activos = (await listarMiembros(db, ORG)).filter((m) => m.activo).length;
+    expect(pm.personas).toHaveLength(activos);
+    expect(pm.personas.every((p) => p.semanas.length === 8)).toBe(true);
+  });
+
+  it("las tareas de una celda son abiertas y tocan esa semana; en la de hoy, también las vencidas", async () => {
+    const db = await ingresar("pm1.a@prueba.test");
+    const tareas = await listarTareasDeSemana(db, { personaId: COLAB1, lunes, hoy: HOY });
+    for (const t of tareas) {
+      expect(["por_hacer", "en_curso", "en_revision"]).toContain(t.estado);
+      expect(t.fechaLimite >= lunes || t.atrasada).toBe(true);
+      expect(t.atrasada).toBe(t.fechaLimite < HOY);
+      expect((t.fechaInicio ?? t.fechaLimite) <= sumarDias(lunes, 6)).toBe(true);
+    }
+    // Otra semana no trae vencidas.
+    const siguiente = await listarTareasDeSemana(db, { personaId: COLAB1, lunes: sumarDias(lunes, 7), hoy: HOY });
+    expect(siguiente.every((t) => !t.atrasada && t.fechaLimite >= sumarDias(lunes, 7))).toBe(true);
   });
 });

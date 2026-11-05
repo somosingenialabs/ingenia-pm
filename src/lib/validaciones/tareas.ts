@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { esFechaDeBase } from "@/lib/fechas";
 import { fechaOpcional, idValido, numeroOpcional, textoOpcional } from "./comun";
 
 export const ESTADOS_TAREA = ["por_hacer", "en_curso", "en_revision", "hecha", "cancelada"] as const;
@@ -36,6 +37,16 @@ export const esquemaMoverTarea = z.object({
   posicion: z.number().finite().optional(),
 });
 export type EntradaMoverTarea = z.input<typeof esquemaMoverTarea>;
+
+/** Arrastre en el calendario: siempre trae el límite; el inicio, solo si cambia. Solo gestor. */
+export const esquemaFechasTarea = z
+  .object({
+    id: idValido,
+    fecha_inicio: fechaOpcional,
+    fecha_limite: z.string().refine(esFechaDeBase, "Escribí una fecha válida."),
+  })
+  .refine(fechasEnOrden, errorFechas);
+export type EntradaFechasTarea = z.input<typeof esquemaFechasTarea>;
 
 export const esquemaLoteTareas = z
   .object({

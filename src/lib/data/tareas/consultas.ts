@@ -15,6 +15,8 @@ export type TareaFila = {
   fecha_limite: string | null;
   horas_estimadas: number | null;
   posicion: number;
+  /** Títulos de las predecesoras abiertas. Solo lo carga la página del proyecto. */
+  bloqueadaPor?: string[];
 };
 
 // Una tarea de un proyecto borrado tampoco existe: por eso el !inner y el filtro de proyecto.

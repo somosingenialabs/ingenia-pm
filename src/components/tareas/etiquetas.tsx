@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowDown, ArrowUp, CalendarDays, ChevronsUp, Circle, CircleAlert, CircleCheck, CircleDashed, CircleDot, CircleX, Equal, Eye, type LucideIcon } from "lucide-react";
+import { AlertTriangle, ArrowDown, ArrowUp, CalendarDays, ChevronsUp, Circle, CircleAlert, CircleCheck, CircleDashed, CircleDot, CircleX, Equal, Eye, Lock, type LucideIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { PersonaRef } from "@/lib/data/comun";
 import { NOMBRE_SALUD, textoAvance, type Salud } from "@/lib/data/proyectos/salud";
@@ -70,6 +70,32 @@ export function FechaLimite({ tarea, hoy }: { tarea: { estado: string; fecha_lim
       {vencida ? <CircleDashed className="size-3.5" aria-hidden /> : <CalendarDays className="size-3.5" aria-hidden />}
       {formatearFecha(tarea.fecha_limite)}
       {vencida && " · Vencida"}
+    </span>
+  );
+}
+
+/**
+ * "Bloqueada por X": tiene una predecesora abierta. Es informativo, no impide mover la tarea.
+ * `compacta` dice solo "Bloqueada" (la lista tiene filas de alto fijo) y el resto va en el globo.
+ */
+export function EtiquetaBloqueada({ por, compacta = false }: { por: readonly string[] | undefined; compacta?: boolean }) {
+  if (!por?.length) return null;
+  const nombres = por.length === 1 ? `«${por[0]}»` : `«${por[0]}» y ${por.length - 1} más`;
+  const completo = `Bloqueada por ${nombres}`;
+  return (
+    <span
+      className={cn("inline-flex min-w-0 gap-1 text-xs", compacta ? "items-center whitespace-nowrap" : "items-start")}
+      title={`Bloqueada por ${por.map((t) => `«${t}»`).join(", ")}`}
+    >
+      <Lock className={cn("size-3.5 shrink-0 text-estado-alerta", !compacta && "mt-px")} aria-hidden />
+      {compacta ? (
+        <>
+          <span aria-hidden>Bloqueada</span>
+          <span className="sr-only">{completo}</span>
+        </>
+      ) : (
+        <span className="line-clamp-2 break-words">{completo}</span>
+      )}
     </span>
   );
 }

@@ -18,7 +18,7 @@ import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalList
 import { CSS } from "@dnd-kit/utilities";
 import { ChevronRight, GripVertical } from "lucide-react";
 import { EnlaceTarea } from "@/components/tareas/enlace-tarea";
-import { EtiquetaPrioridad, FechaLimite, Persona } from "@/components/tareas/etiquetas";
+import { EtiquetaBloqueada, EtiquetaPrioridad, FechaLimite, Persona } from "@/components/tareas/etiquetas";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Segmentado } from "@/components/ui/segmented";
@@ -44,19 +44,22 @@ export function Tablero({
   usuarioId,
   hoy,
   onMover,
+  onArrastre,
 }: {
   tareas: TareaFila[];
   gestiona: boolean;
   usuarioId: string;
   hoy: string;
   onMover: (movimiento: Movimiento) => void;
+  /** Empieza o termina un arrastre: mientras dura, no se refresca el tablero desde afuera. */
+  onArrastre?: (activo: boolean) => void;
 }) {
   const puedeMover = (t: TareaFila) => puedeMoverTarea(gestiona, t.asignado?.id ?? null, usuarioId);
   const porColumna = (estado: EstadoTarea) => ordenarPorPosicion(tareas.filter((t) => t.estado === estado));
 
   return (
     <>
-      <TableroEscritorio tareas={tareas} porColumna={porColumna} puedeMover={puedeMover} hoy={hoy} onMover={onMover} />
+      <TableroEscritorio tareas={tareas} porColumna={porColumna} puedeMover={puedeMover} hoy={hoy} onMover={onMover} onArrastre={onArrastre} />
       <TableroCelular porColumna={porColumna} puedeMover={puedeMover} hoy={hoy} onMover={onMover} />
     </>
   );
@@ -69,7 +72,7 @@ type PropsVista = {
   onMover: (movimiento: Movimiento) => void;
 };
 
-function TableroEscritorio({ tareas, porColumna, puedeMover, hoy, onMover }: PropsVista & { tareas: TareaFila[] }) {
+function TableroEscritorio({ tareas, porColumna, puedeMover, hoy, onMover, onArrastre }: PropsVista & { tareas: TareaFila[]; onArrastre?: (activo: boolean) => void }) {
   const [activa, setActiva] = useState<TareaFila | null>(null);
   const sensores = useSensors(
     // Una distancia mínima: así un clic en el agarre no cuenta como arrastre.
@@ -93,10 +96,12 @@ function TableroEscritorio({ tareas, porColumna, puedeMover, hoy, onMover }: Pro
 
   function alEmpezar({ active }: DragStartEvent) {
     setActiva(tareas.find((t) => t.id === active.id) ?? null);
+    onArrastre?.(true);
   }
 
   function alSoltar({ active, over }: DragEndEvent) {
     setActiva(null);
+    onArrastre?.(false);
     if (!over) return;
     const tarea = tareas.find((t) => t.id === active.id);
     if (!tarea) return;
@@ -119,7 +124,10 @@ function TableroEscritorio({ tareas, porColumna, puedeMover, hoy, onMover }: Pro
         collisionDetection={closestCorners}
         onDragStart={alEmpezar}
         onDragEnd={alSoltar}
-        onDragCancel={() => setActiva(null)}
+        onDragCancel={() => {
+          setActiva(null);
+          onArrastre?.(false);
+        }}
         accessibility={{
           announcements: anuncios,
           screenReaderInstructions: {
@@ -212,6 +220,11 @@ function CuerpoTarjeta({ tarea, hoy, agarre }: { tarea: TareaFila; hoy: string; 
           <EtiquetaPrioridad prioridad={tarea.prioridad} />
           <FechaLimite tarea={tarea} hoy={hoy} />
         </div>
+        {!!tarea.bloqueadaPor?.length && (
+          <div className="mt-1 flex min-w-0">
+            <EtiquetaBloqueada por={tarea.bloqueadaPor} />
+          </div>
+        )}
         <div className="mt-1">
           <Persona persona={tarea.asignado} />
         </div>

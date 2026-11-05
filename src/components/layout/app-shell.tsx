@@ -40,7 +40,12 @@ export function AppShell({ contexto, children }: { contexto: Contexto; children:
       </SidebarInset>
       <BarraPestanas />
       <Suspense fallback={null}>
-        <PanelTarea usuarioId={contexto.usuario.id} rol={contexto.rol} hoy={hoyEnZona(contexto.organizacion.zonaHoraria)} />
+        <PanelTarea
+          yo={{ id: contexto.usuario.id, nombre: contexto.usuario.nombre, avatarUrl: contexto.usuario.avatarUrl }}
+          organizacionId={contexto.organizacion.id}
+          rol={contexto.rol}
+          hoy={hoyEnZona(contexto.organizacion.zonaHoraria)}
+        />
       </Suspense>
     </SidebarProvider>
   );

@@ -1,0 +1,281 @@
+/*
+  react-big-calendar con los tokens de la sección 4. Todo cuelga de .calendario-ingenia para no
+  tocar nada fuera del calendario. Los colores son variables: el modo oscuro sale solo.
+  Sin sombras decorativas: la elevación se marca con borde.
+*/
+
+.calendario-ingenia .rbc-calendar {
+  font-family: inherit;
+  color: var(--foreground);
+}
+
+.calendario-ingenia .rbc-month-view,
+.calendario-ingenia .rbc-time-view,
+.calendario-ingenia .rbc-agenda-view {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--card);
+}
+
+/* ===== Encabezados de días ===== */
+.calendario-ingenia .rbc-header {
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+.calendario-ingenia .rbc-header + .rbc-header,
+.calendario-ingenia .rbc-day-bg + .rbc-day-bg,
+.calendario-ingenia .rbc-time-header-content,
+.calendario-ingenia .rbc-time-content > * + * > * {
+  border-left: 1px solid var(--border);
+}
+.calendario-ingenia .rbc-month-row + .rbc-month-row,
+.calendario-ingenia .rbc-time-header.rbc-overflowing,
+.calendario-ingenia .rbc-time-content {
+  border-color: var(--border);
+}
+
+/* ===== Mes ===== */
+.calendario-ingenia .rbc-month-view {
+  min-height: 640px;
+}
+.calendario-ingenia .rbc-off-range-bg {
+  background: var(--background);
+}
+.calendario-ingenia .rbc-off-range {
+  color: var(--muted-foreground);
+}
+.calendario-ingenia .rbc-today {
+  background: color-mix(in srgb, var(--primary) 7%, var(--card));
+}
+.calendario-ingenia .rbc-date-cell {
+  padding: 4px 6px 2px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.calendario-ingenia .rbc-date-cell .rbc-button-link {
+  min-width: 28px;
+  min-height: 28px;
+  border-radius: 999px;
+  padding: 0 6px;
+}
+.calendario-ingenia .rbc-date-cell .rbc-button-link:hover {
+  background: var(--accent);
+}
+.calendario-ingenia .rbc-date-cell.rbc-now .rbc-button-link {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-weight: 600;
+}
+.calendario-ingenia .rbc-row-segment {
+  padding: 1px 3px;
+}
+.calendario-ingenia .rbc-show-more {
+  margin: 2px 4px;
+  background: transparent;
+  color: var(--link);
+  font-size: 12px;
+  font-weight: 500;
+}
+.dark .calendario-ingenia .rbc-show-more {
+  color: #409cff;
+}
+
+/* ===== Eventos: superficie con franja del color del proyecto, texto en el color normal ===== */
+.calendario-ingenia .rbc-event,
+.calendario-ingenia .rbc-day-slot .rbc-background-event {
+  border: 1px solid color-mix(in srgb, var(--color-proyecto, var(--chart-1)) 35%, var(--border));
+  border-left: 3px solid var(--color-proyecto, var(--chart-1));
+  border-radius: 6px;
+  padding: 0;
+  background: color-mix(in srgb, var(--color-proyecto, var(--chart-1)) 12%, var(--card));
+  color: var(--foreground);
+  font-size: 12px;
+  transition: opacity 150ms ease;
+}
+.calendario-ingenia .rbc-event.rbc-selected,
+.calendario-ingenia .rbc-event.evento-seleccionado {
+  background: color-mix(in srgb, var(--color-proyecto, var(--chart-1)) 22%, var(--card));
+  outline: 2px solid var(--foreground);
+  outline-offset: 1px;
+}
+.calendario-ingenia .rbc-event.evento-relacionado {
+  outline: 2px dashed var(--foreground);
+  outline-offset: 1px;
+}
+.calendario-ingenia .rbc-event.evento-atenuado {
+  opacity: 0.35;
+}
+.calendario-ingenia .rbc-event.evento-objetivo {
+  border-style: dashed;
+  border-left-style: solid;
+  background: var(--card);
+  font-weight: 600;
+}
+.calendario-ingenia .rbc-event:focus,
+.calendario-ingenia .rbc-event:focus-within {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+.calendario-ingenia .evento-boton {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: inherit;
+  outline: none;
+}
+.calendario-ingenia .evento-agenda {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-height: 44px;
+  padding: 8px 0;
+  font-size: 14px;
+}
+
+/* ===== Semana: solo hay eventos de día completo, así que va sin grilla de horas ===== */
+.calendario-ingenia.vista-week .rbc-time-content,
+.calendario-ingenia.vista-week .rbc-time-header-gutter,
+.calendario-ingenia.vista-week .rbc-label {
+  display: none;
+}
+.calendario-ingenia.vista-week .rbc-time-header-content {
+  border-left: 0;
+}
+.calendario-ingenia.vista-week .rbc-allday-cell {
+  height: auto;
+  min-height: 360px;
+  max-height: none;
+}
+.calendario-ingenia.vista-week .rbc-time-header-cell .rbc-header {
+  min-height: 0;
+}
+.calendario-ingenia.vista-week .rbc-header .rbc-button-link {
+  min-height: 32px;
+  text-transform: capitalize;
+}
+
+/* ===== Agenda ===== */
+/* La librería espera un alto fijo y la Agenda se estira con flex: sin esto queda con alto cero. */
+.calendario-ingenia .rbc-agenda-view {
+  flex: none;
+}
+.calendario-ingenia .rbc-agenda-view .rbc-agenda-content {
+  overflow: visible;
+}
+.calendario-ingenia .rbc-agenda-view table.rbc-agenda-table {
+  border: 0;
+}
+.calendario-ingenia .rbc-agenda-view table.rbc-agenda-table thead > tr > th {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+}
+.calendario-ingenia .rbc-agenda-view table.rbc-agenda-table tbody > tr > td {
+  padding: 4px 12px;
+  vertical-align: top;
+}
+.calendario-ingenia .rbc-agenda-view table.rbc-agenda-table tbody > tr + tr,
+.calendario-ingenia .rbc-agenda-view table.rbc-agenda-table tbody > tr > td + td {
+  border-color: var(--border);
+}
+.calendario-ingenia .rbc-agenda-date-cell {
+  padding-top: 14px !important;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+/* "Mié 4 nov": mayúscula solo al principio. */
+.calendario-ingenia .rbc-agenda-date-cell::first-letter {
+  text-transform: uppercase;
+}
+/* Todas las tareas son de día completo: la columna de hora no dice nada. */
+.calendario-ingenia .rbc-agenda-time-cell,
+.calendario-ingenia .rbc-agenda-view thead th:nth-child(2) {
+  display: none;
+}
+/* Más específico que el borde gris de arriba: la franja del proyecto tiene que ganar. */
+.calendario-ingenia .rbc-agenda-view table.rbc-agenda-table tbody > tr > td.rbc-agenda-event-cell {
+  border-left: 3px solid var(--color-proyecto, var(--chart-1));
+}
+.calendario-ingenia .rbc-agenda-view .rbc-agenda-event-cell {
+  background: transparent;
+}
+.calendario-ingenia .rbc-agenda-empty {
+  padding: 48px 16px;
+  color: var(--muted-foreground);
+  text-align: center;
+}
+@media (max-width: 767px) {
+  .calendario-ingenia .rbc-agenda-view table.rbc-agenda-table tbody > tr > td {
+    padding: 4px 8px;
+  }
+  .calendario-ingenia .rbc-month-view {
+    min-height: 480px;
+  }
+  .calendario-ingenia .rbc-header {
+    font-size: 11px;
+  }
+}
+
+/* ===== Globo de "N más" ===== */
+.calendario-ingenia .rbc-overlay {
+  z-index: 30;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow: none;
+}
+.calendario-ingenia .rbc-overlay-header {
+  margin: -8px -8px 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+/* ===== Arrastre ===== */
+.calendario-ingenia .rbc-addons-dnd .rbc-addons-dnd-row-body {
+  position: relative;
+}
+.calendario-ingenia .rbc-addons-dnd-dragged-event {
+  opacity: 0.4;
+}
+.calendario-ingenia .rbc-addons-dnd .rbc-event.rbc-addons-dnd-dragged-event {
+  outline: 2px dashed var(--ring);
+}
+.calendario-ingenia .rbc-addons-dnd-resizable {
+  width: 100%;
+}
+.calendario-ingenia .rbc-addons-dnd-resize-ew-icon {
+  border-color: var(--muted-foreground);
+}
+.calendario-ingenia .rbc-slot-selection,
+.calendario-ingenia .rbc-addons-dnd-drag-preview {
+  background: color-mix(in srgb, var(--primary) 15%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .calendario-ingenia .rbc-event {
+    transition: none;
+  }
+}

@@ -7,7 +7,7 @@ import { ArrowDown, ArrowUp, ArrowUpDown, Check, Minus } from "lucide-react";
 import { toast } from "sonner";
 import { mensajeDeError } from "@/components/estado/mensaje-de-error";
 import { EnlaceTarea } from "@/components/tareas/enlace-tarea";
-import { EtiquetaEstado, EtiquetaPrioridad, FechaLimite, Persona } from "@/components/tareas/etiquetas";
+import { EtiquetaBloqueada, EtiquetaEstado, EtiquetaPrioridad, FechaLimite, Persona } from "@/components/tareas/etiquetas";
 import { Button } from "@/components/ui/button";
 import { NINGUNO, Selector } from "@/components/ui/selector";
 import type { PersonaRef } from "@/lib/data/comun";
@@ -80,9 +80,12 @@ export function ListaTareas({
         accessorKey: "titulo",
         header: "Título",
         cell: ({ row }) => (
-          <EnlaceTarea id={row.original.id} className="flex min-h-11 items-center underline-offset-4 outline-none hover:underline focus-visible:underline">
-            <span className="truncate font-medium">{row.original.titulo}</span>
-          </EnlaceTarea>
+          <span className="flex min-w-0 items-center gap-3">
+            <EnlaceTarea id={row.original.id} className="flex min-h-11 min-w-0 items-center underline-offset-4 outline-none hover:underline focus-visible:underline">
+              <span className="truncate font-medium">{row.original.titulo}</span>
+            </EnlaceTarea>
+            <EtiquetaBloqueada por={row.original.bloqueadaPor} compacta />
+          </span>
         ),
       },
       { accessorKey: "estado", header: "Estado", cell: ({ row }) => <EtiquetaEstado estado={row.original.estado} /> },

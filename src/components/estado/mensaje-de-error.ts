@@ -7,6 +7,12 @@ function textoDeError(error: unknown): string {
 
 const MENSAJES_DE_LA_BASE: readonly (readonly [RegExp, string])[] = [
   [/arma un ciclo/i, "Esa dependencia arma un ciclo entre tareas. Sacá una de las dos."],
+  [/tarea_dependencias_pkey/i, "Esa dependencia ya existe."],
+  [/tienen que ser del mismo proyecto/i, "Las dos tareas tienen que ser del mismo proyecto."],
+  [/depender de s[ií] misma|tarea_dependencias_check/i, "Una tarea no puede depender de sí misma."],
+  [/comentario eliminado no se puede editar/i, "Ese comentario se borró y ya no se puede editar."],
+  [/No pod[eé]s borrar este comentario/i, "No podés borrar este comentario."],
+  [/El comentario no existe/i, "Ese comentario ya no existe, o no tenés acceso."],
   [/no es miembro del proyecto/i, "Esa persona no es miembro del proyecto. Sumala antes de asignarle la tarea."],
   [/sin un Admin activo/i, "La empresa no puede quedarse sin un Admin activo. Nombrá a otra persona antes."],
   [/Solo pod[eé]s cambiar el estado/i, "Solo podés cambiar el estado, la posición y la descripción de esta tarea."],
