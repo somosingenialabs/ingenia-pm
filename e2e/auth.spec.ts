@@ -122,8 +122,9 @@ test("el token real trae la empresa y el RLS responde con ella", async ({ reques
   expect(datos.org_id).toBe("10000000-0000-4000-a000-000000000000");
 
   const headers = { apikey, Authorization: `Bearer ${token}` };
-  const proyectos = await (await request.get(`${API_SUPABASE}/rest/v1/proyectos?select=id`, { headers })).json();
-  expect(proyectos).toHaveLength(2);
+  const proyectos = (await (await request.get(`${API_SUPABASE}/rest/v1/proyectos?select=id&order=id`, { headers })).json()) as { id: string }[];
+  // Los del seed donde está colab3: 1, 3 y 4 (historia). Ni el 2 ni el 5.
+  expect(proyectos.map((p) => p.id)).toEqual(["12000000-0000-4000-a000-000000000001", "12000000-0000-4000-a000-000000000003", "12000000-0000-4000-a000-000000000004"]);
 
   // Sin sesión, la API no da nada.
   const sinSesion = await request.get(`${API_SUPABASE}/rest/v1/proyectos?select=id`, { headers: { apikey } });

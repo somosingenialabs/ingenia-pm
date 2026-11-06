@@ -1,9 +1,12 @@
 import { Suspense, type ReactNode } from "react";
 import Link from "next/link";
 import { EnlaceTarea } from "@/components/tareas/enlace-tarea";
-import { BarraAvance, EtiquetaPrioridad, EtiquetaSalud, Persona } from "@/components/tareas/etiquetas";
-import { puedeCrearProyecto } from "@/lib/auth/permisos";
+import { BarraAvance, EtiquetaEstado, EtiquetaPrioridad, EtiquetaSalud, Persona } from "@/components/tareas/etiquetas";
+import { puedeCrearProyecto, veMetricasDeEquipo } from "@/lib/auth/permisos";
 import type { Rol } from "@/lib/auth/tipos";
+import { horasDePersona, listarTrabadas } from "@/lib/data/analitica/consultas";
+import { resolverPeriodo, textoDuracionLarga } from "@/lib/data/analitica/reglas";
+import { lunesDe, textoHoras } from "@/lib/data/carga/reglas";
 import type { ClienteSupabase } from "@/lib/data/comun";
 import {
   contarEnCurso,
@@ -32,7 +35,8 @@ export type DefinicionTarjeta = {
   /** El "qué mide", con la definición escrita. */
   queMide: string;
   href?: string;
-  className?: string;
+  /** Una función si el ancho depende del rol (cuántas chicas le tocan a cada uno). */
+  className?: string | ((rol: Rol) => string);
   /** Sin esto, la ven todos los roles. */
   visible?: (rol: Rol) => boolean;
   cargar: (contexto: ContextoTarjeta) => Promise<Contenido>;
@@ -78,13 +82,22 @@ export const TARJETAS_INICIO: readonly DefinicionTarjeta[] = [
     cargar: async ({ db }) => ({ valor: await contarProyectosActivos(db) }),
   },
   {
+    id: "mis-horas",
+    tamano: "chica",
+    titulo: "Mis horas de la semana",
+    queMide: "Horas que cargué desde el lunes, sin el temporizador que está corriendo.",
+    href: "/horas",
+    // Quinta chica: con Sin asignar (Admin y PM) comparten la fila; si no, ocupa todo el ancho.
+    className: (rol) => (puedeCrearProyecto(rol) ? "md:col-span-3 xl:col-span-6" : "md:col-span-6 xl:col-span-12"),
+    cargar: async ({ db, usuarioId, hoy }) => ({ valor: textoHoras(await horasDePersona(db, { usuarioId, desde: lunesDe(hoy), hasta: hoy })) }),
+  },
+  {
     id: "sin-asignar",
     tamano: "chica",
     titulo: "Sin asignar",
     queMide: "Tareas abiertas sin responsable, en todos los proyectos.",
     href: "/proyectos",
-    // Es la quinta chica de la fila: ocupa todo el ancho para no dejar un hueco.
-    className: "md:col-span-6 xl:col-span-12",
+    className: "md:col-span-3 xl:col-span-6",
     visible: puedeCrearProyecto,
     cargar: async ({ db }) => ({ valor: await contarSinAsignar(db) }),
   },
@@ -194,12 +207,50 @@ export const TARJETAS_INICIO: readonly DefinicionTarjeta[] = [
       };
     },
   },
+  {
+    id: "tareas-trabadas",
+    tamano: "ancha",
+    titulo: "Tareas trabadas",
+    queMide: "Tareas abiertas que llevan en su estado más de lo normal (últimas 12 semanas), de la que más lleva a la que menos.",
+    visible: veMetricasDeEquipo,
+    cargar: async ({ db, hoy }) => {
+      const { desde, hasta } = resolverPeriodo({}, hoy);
+      const { total, tareas } = await listarTrabadas(db, { desde, hasta, limite: 6 });
+      if (total === 0) return { textoVacio: "No hay tareas trabadas." };
+      return {
+        valor: total,
+        cuerpo: (
+          <div className="flex flex-col gap-2">
+            <ul className="grid gap-x-6 md:grid-cols-2">
+              {tareas.map((t) => (
+                <li key={t.tareaId} className="min-w-0">
+                  <EnlaceTarea id={t.tareaId} className={`${claseFila} py-1.5`}>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm">{t.titulo}</span>
+                      <span className="block truncate text-xs text-muted-foreground">{t.proyecto}</span>
+                    </span>
+                    <span className="flex shrink-0 flex-col items-end gap-0.5">
+                      <EtiquetaEstado estado={t.estado} />
+                      <span className="text-xs font-medium tabular-nums">{textoDuracionLarga(t.horasEnEstado)}</span>
+                    </span>
+                  </EnlaceTarea>
+                </li>
+              ))}
+            </ul>
+            <Link href="/analitica" className="inline-flex min-h-11 items-center self-start text-sm font-medium text-link hover:underline">
+              Ver todas en Analítica
+            </Link>
+          </div>
+        ),
+      };
+    },
+  },
 ];
 
 /** Una tarjeta en su propio Suspense: carga sola. El try hace que, si falla, las demás sigan. */
 async function CuerpoTarjeta({ tarjeta, usuarioId, hoy, rol }: { tarjeta: DefinicionTarjeta; usuarioId: string; hoy: string; rol: Rol }) {
-  const { id, tamano, titulo, queMide, href, className } = tarjeta;
-  const comunes = { tamano, titulo, queMide, className };
+  const { id, tamano, titulo, queMide, href } = tarjeta;
+  const comunes = { tamano, titulo, queMide, className: claseDe(tarjeta, rol) };
   let contenido: Contenido;
   try {
     const db = await crearClienteServidor();
@@ -216,9 +267,13 @@ async function CuerpoTarjeta({ tarjeta, usuarioId, hoy, rol }: { tarjeta: Defini
   );
 }
 
+function claseDe(tarjeta: DefinicionTarjeta, rol: Rol): string | undefined {
+  return typeof tarjeta.className === "function" ? tarjeta.className(rol) : tarjeta.className;
+}
+
 export function TarjetasInicio({ usuarioId, hoy, rol }: { usuarioId: string; hoy: string; rol: Rol }) {
   return TARJETAS_INICIO.filter((t) => !t.visible || t.visible(rol)).map((t) => (
-    <Suspense key={t.id} fallback={<BentoCard tamano={t.tamano} titulo={t.titulo} queMide={t.queMide} className={t.className} estado="cargando" />}>
+    <Suspense key={t.id} fallback={<BentoCard tamano={t.tamano} titulo={t.titulo} queMide={t.queMide} className={claseDe(t, rol)} estado="cargando" />}>
       <CuerpoTarjeta tarjeta={t} usuarioId={usuarioId} hoy={hoy} rol={rol} />
     </Suspense>
   ));

@@ -14,7 +14,7 @@ npm ci
 npx supabase start
 ```
 
-En Windows con PowerShell usá `npm.cmd` y `npx.cmd`. Usá `npm ci` y no `npm install`: con estas dependencias, npm 11 borra el binario de Windows de `rolldown` y Vitest deja de arrancar. Para agregar una dependencia: sumala a `package.json`, corré `npm run lock:regenerar` y después `npm ci`.
+En Windows con PowerShell usá `npm.cmd` y `npx.cmd`. Usá `npm ci` y no `npm install`: con estas dependencias, npm 11 borra el binario de Windows de `rolldown` y Vitest deja de arrancar. Para agregar una dependencia: sumala a `package.json`, corré `npm run lock:regenerar` (conserva los binarios de Linux y Mac) y después `npm ci`.
 
 Copiá `.env.example` a `.env.local` y completalo con lo que muestra `npx supabase status`:
 

@@ -19,8 +19,8 @@ const CLASES_TAMANO: Record<TamanoBento, string> = {
 export type Variacion = {
   /** Cambio relativo contra el período anterior (0.12 = +12 %). */
   valor: number;
-  /** Si subir es bueno (tareas cerradas) o malo (tareas vencidas). Por defecto, bueno. */
-  subirEsBueno?: boolean;
+  /** Si subir es bueno (tareas cerradas) o malo (tareas vencidas). Por defecto, bueno. Null: ni una cosa ni la otra (horas). */
+  subirEsBueno?: boolean | null;
 };
 
 /**
@@ -97,8 +97,8 @@ export function BentoCard({
       {estado === "listo" && (
         <>
           {(valor !== undefined || variacion) && (
-            <div className="flex items-baseline gap-2">
-              {valor !== undefined && <p className="text-3xl font-semibold tracking-tight tabular-nums">{valor}</p>}
+            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+              {valor !== undefined && <p className="min-w-0 text-3xl font-semibold tracking-tight whitespace-nowrap tabular-nums">{valor}</p>}
               {variacion && <IndicadorVariacion {...variacion} />}
             </div>
           )}
@@ -119,7 +119,7 @@ export function BentoCard({
 function IndicadorVariacion({ valor, subirEsBueno = true }: Variacion) {
   const formato = new Intl.NumberFormat("es-AR", { style: "percent", maximumFractionDigits: 1, signDisplay: "exceptZero" });
   const neutro = Math.abs(valor) < 0.0005;
-  const bueno = neutro ? null : (valor > 0) === subirEsBueno;
+  const bueno = neutro || subirEsBueno === null ? null : (valor > 0) === subirEsBueno;
   const Icono = neutro ? Minus : valor > 0 ? ArrowUpRight : ArrowDownRight;
   return (
     <span

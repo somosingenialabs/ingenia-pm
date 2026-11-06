@@ -85,6 +85,16 @@
   --chart-3: #d95926;
   --chart-4: #7d6bd9;
   --chart-5: #8e8e93;
+  /* Series de Analítica, en orden fijo (el color sigue al proyecto). Validadas contra #FFFFFF
+     con dataviz validate_palette: 3 quedan bajo 3:1, por eso cada gráfico tiene leyenda y tabla. */
+  --serie-1: #2a78d6;
+  --serie-2: #eb6834;
+  --serie-3: #1baf7a;
+  --serie-4: #eda100;
+  --serie-5: #e87ba4;
+  --serie-6: #008300;
+  --serie-otros: #8e8e93;
+  --grafico-grilla: #e5e5ea;
   --radius: 8px;
   --sidebar: rgb(242 242 247 / 0.8);
   --sidebar-foreground: #1c1c1e;
@@ -129,6 +139,15 @@
   --chart-3: #d95926;
   --chart-4: #9085e9;
   --chart-5: #8e8e93;
+  /* Series de Analítica: los mismos tonos, con el paso validado contra #1C1C1E. */
+  --serie-1: #3987e5;
+  --serie-2: #d95926;
+  --serie-3: #199e70;
+  --serie-4: #c98500;
+  --serie-5: #d55181;
+  --serie-6: #008300;
+  --serie-otros: #8e8e93;
+  --grafico-grilla: #38383a;
   --radius: 8px;
   --sidebar: rgb(0 0 0 / 0.75);
   --sidebar-foreground: #ffffff;

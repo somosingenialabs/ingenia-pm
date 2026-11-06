@@ -57,14 +57,15 @@ declare
     v_evento jsonb;
     v_id     uuid;
 begin
-    -- ===== El seed cumple lo que pide la fase =====
-    select count(*) into v_n from public.tareas where organizacion_id = c_org;
+    -- ===== El seed 30 cumple lo que pide la fase (el 40 suma historia aparte) =====
+    select count(*) into v_n from public.tareas where organizacion_id = c_org and id::text like '13000000-%';
     if v_n <> 30 then raise exception 'FALLA: la Empresa A debería tener 30 tareas y tiene %', v_n; end if;
-    select count(distinct estado) into v_n from public.tareas where organizacion_id = c_org;
+    select count(distinct estado) into v_n from public.tareas where organizacion_id = c_org and id::text like '13000000-%';
     if v_n <> 5 then raise exception 'FALLA: las tareas deberían estar en 5 estados y están en %', v_n; end if;
     select count(*) into v_n from public.tarea_dependencias where organizacion_id = c_org;
     if v_n <> 3 then raise exception 'FALLA: la Empresa A debería tener 3 dependencias y tiene %', v_n; end if;
-    select count(*) into v_n from public.tarea_historial_estados where organizacion_id = c_org and estado_anterior is null;
+    select count(*) into v_n from public.tarea_historial_estados where organizacion_id = c_org and estado_anterior is null
+        and tarea_id::text like '13000000-%';
     if v_n <> 30 then raise exception 'FALLA: cada tarea debería nacer con su fila de historial, hay %', v_n; end if;
     select count(*) into v_n from public.proyecto_miembros where proyecto_id = c_p2 and usuario_id = c_colab3;
     if v_n <> 0 then raise exception 'FALLA: colab3 debería quedar fuera del proyecto 2'; end if;

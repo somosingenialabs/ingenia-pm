@@ -170,9 +170,13 @@ test("mover una tarjeta con el teclado", async ({ page, request }, info) => {
 
   await ingresar(page, colab.email);
   await page.goto(`/proyectos/${proyecto}`);
+  // Cada tecla espera el aviso de dnd-kit: si se aprieta antes de que mida las columnas, la
+  // tarjeta se suelta donde estaba (pasaba 1 de cada 5 veces).
   await page.getByRole("button", { name: `Mover ${titulo}` }).focus();
   await page.keyboard.press("Space");
+  await expect(page.getByRole("status").filter({ hasText: `${titulo} sobre Por hacer.` })).toBeAttached();
   await page.keyboard.press("ArrowRight");
+  await expect(page.getByRole("status").filter({ hasText: `${titulo} sobre En curso.` })).toBeAttached();
   await page.keyboard.press("Space");
   await expect(columna(page, "En curso").getByRole("link", { name: titulo })).toBeVisible();
 
@@ -329,6 +333,9 @@ test("44 px y sin scroll horizontal en todas las pantallas", async ({ page }) =>
     "/configuracion/perfil",
     "/configuracion/miembros",
     "/configuracion/organizacion",
+    "/horas",
+    "/analitica",
+    "/analitica?periodo=medida&desde=2026-01-01&hasta=2026-01-31",
   ]) {
     await page.goto(ruta);
     await page.waitForLoadState("networkidle");

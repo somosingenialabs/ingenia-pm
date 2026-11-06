@@ -2,7 +2,7 @@
 
 Cada fase, al cerrar, actualiza este archivo. Es lo único que la sesión siguiente lee de la anterior: tiene que alcanzar.
 
-**Fase siguiente:** 5 · `docs/fases/fase_5_analytics_time.md`
+**Fase siguiente:** ninguna. Las 5 fases del plan están hechas. Lo que queda es salir a producción: ver "Pendientes abiertos".
 
 | Fase | Estado | Fecha | Notas para la que sigue |
 |---|---|---|---|
@@ -10,7 +10,7 @@ Cada fase, al cerrar, actualiza este archivo. Es lo único que la sesión siguie
 | 2. Esquema y RLS | Terminada | 2026-11-01 | Ver "Disponible desde la fase 2". `obtenerContexto()` da usuario, empresa y rol; sin empresa activa manda a `/sin-empresa`. `navegacion.ts` todavía no filtra por rol. `src/lib/data/comun.ts` sigue con `Resultado` y `Ref`: sumá lo demás ahí, no lo pises. **Dependencias:** nunca `npm install`; ver `README.md` |
 | 3. UI base y Bento | Terminada | 2026-11-02 | Ver "Disponible desde la fase 3". Comentarios: completá `SeccionComentarios` en `src/components/tareas/secciones-reservadas.tsx`. El tablero ya tiene `useOptimistic` en `vistas-proyecto.tsx`: realtime tiene que refrescar esos datos, no pisarlos. Sumá tarjetas solo en `TARJETAS_INICIO` |
 | 4. Calendario y realtime | Terminada | 2026-11-04 | Ver "Disponible desde la fase 4". Horas: completá `SeccionTiempo` en `src/components/tareas/secciones-reservadas.tsx`, que es lo único que queda ahí. `analitica.carga_por_persona` ya existe en el esquema `analitica`: las métricas nuevas van al lado. Para escuchar una tabla en vivo usá `useCanalRealtime`, y sumá la tabla a la publicación `supabase_realtime` en una migración. `/horas` y `/analitica` siguen en `SIN_PANTALLA` de `navegacion.ts` |
-| 5. Horas y analítica | En curso | 2026-11-05 | Pasos 1 y 2 hechos, en la rama `fase-5-horas-analitica`. Ver "Fase 5 en curso" |
+| 5. Horas y analítica | Terminada | 2026-11-06 | Ver "Disponible desde la fase 5". En la rama `fase-5-horas-analitica`, sin mergear. Para una métrica nueva: función en `analitica` con su caso en `supabase/tests/metricas.test.sql`, lectura en `src/lib/data/analitica/consultas.ts` y tarjeta en `tarjetas-analitica.tsx` |
 
 ## Disponible desde la fase 2
 
@@ -70,25 +70,27 @@ Cada fase, al cerrar, actualiza este archivo. Es lo único que la sesión siguie
 - **Vitest corre en zona `America/Argentina/Buenos_Aires`** (`vitest.config.ts`): un test de fechas que pase solo ahí no prueba otra zona.
 - **Git Bash convierte `/proyectos` en una ruta de Windows.** Usá `MSYS_NO_PATHCONV=1`.
 
-## Fase 5 en curso
+## Disponible desde la fase 5
 
-Se trabaja paso por paso, con el sí del usuario al terminar cada uno. Rama `fase-5-horas-analitica`, sin mergear.
+**RPC, para `authenticated`:**
 
-**Hecho:**
+- `public.iniciar_temporizador(p_tarea)`, `public.detener_temporizador(p_minutos default null, p_nota default null)`, `public.descartar_temporizador()`: `security invoker`, con la hora del servidor.
+- 11 funciones en `analitica`, todas `security invoker`, con `(p_desde, p_hasta, p_proyectos uuid[] default null, p_usuarios uuid[] default null)` y rango máximo de 370 días: `horas_por_periodo`, `utilizacion`, `precision_estimacion` (más `p_por`: `usuario`, `proyecto` o `total`), `tiempos_de_ciclo`, `tiempo_en_estado`, `cuellos_de_botella`, `tareas_trabadas`, `rendimiento`, `trabajo_en_curso`, `cumplimiento_plazos` y `consumo_presupuesto`. Un colaborador recibe solo lo suyo pida lo que pida (`app.metricas_usuarios`), y `consumo_presupuesto` le devuelve vacío.
+- Ayudas en `app`: `zona_empresa()`, `inicio_del_dia(fecha, zona)`, `metricas_validar_rango`, `metricas_abiertas`.
 
-- **Paso 1, temporizador y horas** (aprobado). Migración `20261105120000_temporizador.sql`: `iniciar_temporizador`, `detener_temporizador` y `descartar_temporizador`, con test en `supabase/tests/tiempo.test.sql`. Pantallas en `src/components/tiempo/`, datos en `src/lib/data/tiempo/`, `/horas` y e2e en `e2e/horas.spec.ts` (8 de 8).
-- **Paso 2, métricas** (falta el sí del usuario). Migración `20261105130000_metricas.sql`: las 11 funciones de `analitica`, más las ayudas `app.zona_empresa`, `app.metricas_usuarios`, `app.metricas_validar_rango`, `app.inicio_del_dia` y `app.metricas_abiertas`. Con 50.000 tareas de prueba, todas tardan menos de 500 ms (la peor, `tareas_trabadas`, ~455 ms). Se reemplazó `tarea_historial_tarea_idx` por `tarea_historial_pasos_idx`.
+**Pantallas:** `/horas` (Mis horas) y `/analitica`, con filtros en la URL (`?periodo=4|12|26|medida`, `desde`, `hasta`, `proyecto`, `persona`). En el inicio: "Mis horas de la semana" para todos y "Tareas trabadas" para Admin y PM.
 
-**Decisiones del paso 2 que el usuario todavía no aprobó:** las horas de tareas canceladas cuentan en horas y utilización. El colaborador queda forzado a sus datos en las 11 funciones. `consumo_presupuesto` devuelve vacío al colaborador y usa las horas de toda la vida del proyecto. `precision_estimacion` tiene `p_por` (`usuario`, `proyecto`, `total`). `tiempos_de_ciclo` devuelve además `n_ciclo`. Un paso cuenta en el período en que terminó.
+**Piezas para reusar:** `src/lib/data/analitica/reglas.ts` (`resolverPeriodo`, `MINIMO_N`, `textoInsuficiente`, `agruparHorasPorProyecto`), `src/components/analitica/graficos.tsx` (`ConTabla`: gráfico con su tabla, y `colorSerie`), `src/lib/data/tiempo/reglas.ts` (`parsearDuracion` acepta `1:30`, `1.5` o `90m`). Colores de series: `--serie-1` a `--serie-6` y `--serie-otros` en `globals.css`, validados en claro y oscuro con el validador de la skill `dataviz`.
 
-**Falta:**
+**Seed 40:** proyectos 4 "Ampliación de depósito" y 5 "Automatización de envasado", con 12 semanas de historia: 60 tareas hechas con historial completo y horas, abiertas, y 3 en revisión trabadas en el proyecto 5. Es determinista: cada reset da los mismos números.
 
-- **Paso 3:** `supabase/seed/40_historia.sql` y `supabase/tests/metricas.test.sql`. El seed actual deja `creado_en = now()` en tareas ya completadas (lead negativo) y no tiene historial de estados: el seed nuevo lo tiene que resolver.
-- **Paso 4:** `/analitica` y las tarjetas de inicio. Sacar `/analitica` de `SIN_PANTALLA` en `navegacion.ts`: se dejó oculta hasta que exista la pantalla.
-- **Recharts:** se suma en el paso 4. Antes, arreglar `npm run lock:regenerar` o revisar el lock después (pierde los binarios de Linux y Mac).
-- **Cierre:** suite e2e completa (todavía no se corrió entera en esta fase), capturas en claro, oscuro y 375 px, y esta sección pasada a "Disponible desde la fase 5" y "Desvíos".
+**Trampas para lo que sigue:**
 
-**Desvíos del paso 1:** Analítica sigue oculta en la navegación. En el detalle de tarea, Horas va antes que Comentarios. `Combobox` pasó a `z-[52]` para funcionar dentro de un diálogo. `secciones-reservadas.tsx` se borró.
+- **Un test que cuenta filas de la empresa A** tiene que filtrar por los ids del seed 30 (`13000000-…`, proyectos 1 a 3): el seed 40 suma proyectos y tareas.
+- **Una métrica que filtra por fecha de cierre** compara `completada_en` contra `app.inicio_del_dia(fecha, zona)`, no convierte cada fila a fecha: así usa el índice. Un cierre a las 22 h en Argentina ya es el día siguiente en UTC; `metricas.test.sql` lo prueba.
+- **`BentoCard` tiene `whitespace-nowrap` en el valor**, para que "727,6 h" no se parta. Un valor que es una frase va en un `span` con `whitespace-normal`, como la precisión.
+- **`next dev` crea `AGENTS.md`** en la raíz. No es parte del proyecto.
+- **El tablero con teclado:** dnd-kit ignora la flecha si llega antes de anunciar "sobre (columna)". El e2e espera ese aviso.
 
 ## Desvíos respecto del plan
 
@@ -160,13 +162,29 @@ Lo que se hizo distinto a lo que dice la fase, y por qué.
 - **Tablero en vivo:** junta los cambios en 500 ms, espera si hay un arrastre en curso y no refresca sin conexión.
 - **`package-lock.json`:** `npm run lock:regenerar` perdió los binarios de Linux y Mac. Se partió del lock del commit anterior, se sumaron los paquetes nuevos con `--package-lock-only` y se recuperaron los 27 binarios. Revisá el lock después de usar el script.
 
+**Fase 5**
+
+- **Decisiones del paso 2, aprobadas por el usuario el 2026-11-06:** las horas de tareas canceladas cuentan en horas, utilización y presupuesto. El colaborador queda forzado a sus datos en las 11 funciones. `consumo_presupuesto` le devuelve vacío y usa las horas de toda la vida del proyecto. `precision_estimacion` tiene `p_por`. `tiempos_de_ciclo` devuelve además `n_ciclo`. Un paso cuenta en el período en que terminó.
+- **Migración 8, `consumo_presupuesto`:** ya no suma horas de tareas borradas, igual que las demás métricas. Va en una migración nueva porque la 7 ya estaba aplicada.
+- **Horas en el detalle de tarea va antes que Comentarios.** `Combobox` pasó a `z-[52]` para funcionar dentro de un diálogo. `secciones-reservadas.tsx` se borró.
+- **El mínimo de 5 datos** se aplica a medianas y porcentajes (cumplimiento, precisión, tiempo en cada estado). Los totales (horas, tareas hechas) se muestran siempre: son cuentas, no promedios.
+- **Período:** 4, 12 y 26 semanas arrancan un lunes y terminan hoy. La variación compara contra los mismos días justo antes. Con poca historia previa da variaciones grandes (en el seed, +826 % de horas): es el dato medido.
+- **Inicio:** "Tareas trabadas" es ancha, debajo de "Mi semana", con hasta 6 y el enlace a Analítica. "Mis horas de la semana" comparte fila con "Sin asignar" (Admin y PM) u ocupa todo el ancho (colaborador).
+- **Presupuesto:** se marca con ícono y texto si el consumo pasa al avance por más de 20 puntos. Es un umbral propio, no un objetivo: se cambia en `DESVIO_PRESUPUESTO`.
+- **A 375 px** el período dice "4 sem", "12 sem" y "26 sem": con el nombre completo no entraba.
+- **`npm run lock:regenerar` arreglado:** parte del lock actual y recupera los binarios que npm pierde (los de Linux y Mac no se resuelven desde Windows), si algún paquete los sigue pidiendo. Se probó sin cambios (lock idéntico) y sumando `recharts` 3.10.1: los 112 binarios siguen.
+- **El seed 30** ahora crea las tareas hechas una semana antes de cerrarlas: el lead daba negativo. El seed 40 les arma el historial.
+- **Tests tocados:** `e2e/auth.spec.ts` y los SQL `dominio` y `roles` cuentan solo lo del seed 30. El e2e del teclado espera los avisos de dnd-kit (fallaba 1 de cada 5). El de 44 px y sin scroll horizontal ahora recorre `/horas` y `/analitica`.
+
 ## Pendientes abiertos
 
-- Producción sería en una VM de Oracle. [FALTA: definir la base de datos de producción.] No entra en las 5 fases.
+- **Para salir a producción:**
+  - **Despliegue:** sería en una VM de Oracle. [FALTA: definir la base de datos de producción.] Falta cómo corre la app (`output: "standalone"` en `next.config.ts` si es Docker), el dominio y HTTPS.
+  - **SMTP:** [FALTA: SMTP de producción, para recuperar contraseña e invitaciones.] Volver `email_sent` y `sign_in_sign_ups` de `config.toml` a valores de producción.
+  - **Primer Admin real:** [FALTA: quién es y qué proyectos se cargan al arrancar.] Sin seed: lo de `supabase/seed/` es solo de desarrollo.
+  - **Respaldos:** [FALTA: frecuencia, dónde se guardan y una prueba de restaurar.]
+  - **Migraciones:** aplicar las 8 en orden contra la base nueva, y correr `npm run test:sql` contra una copia.
 - `docs/fases/fase_1_setup_auth.md` sigue diciendo `[auth.email] enable_signup = false`. No sirve: ver "Desvíos".
-- [FALTA: SMTP de producción, para recuperar contraseña.]
 - La tarjeta "Proyectos" del inicio muestra hasta 8 activos, sin enlace a "ver todos" adentro. Lo mismo "Próximos plazos": 8 tareas.
-- [FALTA: quién es el primer Admin real y qué proyectos se cargan al arrancar.]
-- `npm run lock:regenerar` pierde los binarios opcionales de otras plataformas: hay que arreglar el script antes de la próxima dependencia.
-- La carga no sabe de feriados ni de licencias. [FALTA: decidir si se cargan feriados por empresa.]
+- La carga y la utilización no saben de feriados ni de licencias (lo dicen en pantalla). [FALTA: decidir si se cargan feriados por empresa.]
 - Decidir si el colaborador ve las dependencias de su tarea en solo lectura.

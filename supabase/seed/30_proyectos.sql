@@ -78,7 +78,7 @@ begin
 
         insert into public.tareas (
             id, organizacion_id, proyecto_id, titulo, descripcion, estado, prioridad, asignado_id,
-            fecha_inicio, fecha_limite, horas_estimadas, posicion, completada_en, creado_por
+            fecha_inicio, fecha_limite, horas_estimadas, posicion, completada_en, creado_en, creado_por
         ) values (
             format('13000000-0000-4000-a000-%s', lpad(i::text, 12, '0'))::uuid,
             c_org_a, v_proyecto,
@@ -92,6 +92,8 @@ begin
             2 + (i % 8),
             i * 1000,
             case when v_estado = 'hecha' then now() - make_interval(days => (i % 10) + 1) end,
+            -- Una tarea hecha se creó antes de cerrarse: si no, el lead da negativo.
+            case when v_estado = 'hecha' then now() - make_interval(days => (i % 10) + 8) else now() end,
             v_equipo[1]
         );
     end loop;

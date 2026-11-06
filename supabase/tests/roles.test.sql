@@ -91,8 +91,8 @@ begin
     if v_n <> 0 then raise exception 'FALLA: colab3 ve los miembros del proyecto 2'; end if;
     v_ok := v_ok + 6;
 
-    -- Y sí ve los suyos.
-    select count(*) into v_n from public.proyectos;
+    -- Y sí ve los suyos (del seed 30: 1 y 3).
+    select count(*) into v_n from public.proyectos where id in ('12000000-0000-4000-a000-000000000001', '12000000-0000-4000-a000-000000000002', '12000000-0000-4000-a000-000000000003');
     if v_n <> 2 then raise exception 'FALLA: colab3 debería ver 2 proyectos y ve %', v_n; end if;
     select count(*) into v_n from public.tareas where proyecto_id = c_p1;
     if v_n <> 14 then raise exception 'FALLA: colab3 debería ver las 14 tareas del proyecto 1 y ve %', v_n; end if;
@@ -141,9 +141,10 @@ begin
 
     -- ===== PM ve todo; edita solo donde es miembro =====
     perform pg_temp.como(c_pm1, c_org);
-    select count(*) into v_n from public.proyectos;
+    -- Contra el seed 30 (el 40 suma dos proyectos con historia).
+    select count(*) into v_n from public.proyectos where id in ('12000000-0000-4000-a000-000000000001', '12000000-0000-4000-a000-000000000002', '12000000-0000-4000-a000-000000000003');
     if v_n <> 3 then raise exception 'FALLA: el PM debería ver 3 proyectos y ve %', v_n; end if;
-    select count(*) into v_n from public.tareas;
+    select count(*) into v_n from public.tareas where id::text like '13000000-%';
     if v_n <> 30 then raise exception 'FALLA: el PM debería ver 30 tareas y ve %', v_n; end if;
     select count(*) into v_n from public.registros_tiempo where proyecto_id = c_p2;
     if v_n = 0 then raise exception 'FALLA: el PM no ve horas del proyecto 2'; end if;
