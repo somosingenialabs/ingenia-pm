@@ -104,7 +104,7 @@ Lo que se hizo distinto a lo que dice la fase, y por qué.
 - **Menú de usuario en el encabezado**, en los dos tamaños, en vez del pie de la barra lateral: en celular la barra lateral no se muestra y hacía falta llegar a Salir.
 - **Sin copiar:** `data-table` (pide `@tanstack`), `boton-acciones-rapidas` y el catálogo `/dev`. `providers.tsx` va sin TanStack Query. La paleta de comandos solo navega.
 - **Sin neumorfismo:** la sección 4 no permite sombras decorativas. Se sacaron las utilidades `neu-*` y el segmentado usa borde.
-- **Sin `output: "standalone"`** en `next.config.ts`, porque todavía no hay imagen Docker de la app.
+- **`output: "standalone"` se sumó después**, junto con el `Dockerfile` (ver `docs/despliegue.md`).
 - **`email_sent = 100` en `config.toml`, solo desarrollo:** con el límite de 2 por hora los e2e de recuperar contraseña fallaban sin aviso. **`minimum_password_length = 10`:** Auth exige lo mismo que el formulario.
 - **Salir cierra solo este dispositivo** (`scope: "local"`), no todas las sesiones de la persona.
 - **Tests de más:** recorrido real de recuperar contraseña con el mail de Mailpit, mismo error con un mail inexistente y registro público cerrado.
@@ -179,11 +179,11 @@ Lo que se hizo distinto a lo que dice la fase, y por qué.
 ## Pendientes abiertos
 
 - **Para salir a producción:**
-  - **Despliegue:** sería en una VM de Oracle. [FALTA: definir la base de datos de producción.] Falta cómo corre la app (`output: "standalone"` en `next.config.ts` si es Docker), el dominio y HTTPS.
+  - **Despliegue:** sería en una VM de Oracle. [FALTA: definir la base de datos de producción.] La app ya tiene `output: "standalone"` y `Dockerfile` (sin probar en una VM). Guía completa en `docs/despliegue.md`. [FALTA: dominio y HTTPS.]
   - **SMTP:** [FALTA: SMTP de producción, para recuperar contraseña e invitaciones.] Volver `email_sent` y `sign_in_sign_ups` de `config.toml` a valores de producción.
   - **Primer Admin real:** [FALTA: quién es y qué proyectos se cargan al arrancar.] Sin seed: lo de `supabase/seed/` es solo de desarrollo.
-  - **Respaldos:** [FALTA: frecuencia, dónde se guardan y una prueba de restaurar.]
-  - **Migraciones:** aplicar las 8 en orden contra la base nueva, y correr `npm run test:sql` contra una copia.
+  - **Respaldos:** [FALTA: frecuencia, dónde se guardan y correr la prueba de restaurar una vez con datos reales.] Los scripts están en `infra/` y no se ejecutaron.
+  - **Migraciones:** el orden está en `docs/despliegue.md`, paso 2. [FALTA: probarlo contra la base de producción.] `npm run test:sql` se corre contra una copia, nunca contra producción.
 - `docs/fases/fase_1_setup_auth.md` sigue diciendo `[auth.email] enable_signup = false`. No sirve: ver "Desvíos".
 - La tarjeta "Proyectos" del inicio muestra hasta 8 activos, sin enlace a "ver todos" adentro. Lo mismo "Próximos plazos": 8 tareas.
 - La carga y la utilización no saben de feriados ni de licencias (lo dicen en pantalla). [FALTA: decidir si se cargan feriados por empresa.]
