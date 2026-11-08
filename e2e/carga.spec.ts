@@ -42,7 +42,10 @@ test("el PM ve la sobrecarga, por qué puede quedar corta y las tareas de la cel
   await celda.click();
   const hoja = page.getByRole("dialog", { name: datos.colab.nombre });
   await expect(hoja.getByRole("link", { name: datos.titulo })).toBeVisible();
-  await expect(hoja.getByRole("heading", { name: "Sin estimar" })).toBeVisible();
+  // Sábado y domingo el viernes ya pasó: la tarea sin estimar figura como atrasada.
+  const hoy = new Intl.DateTimeFormat("en-CA", { timeZone: ZONA }).format(new Date());
+  const yaVencio = hoy > semanaActual().viernes;
+  await expect(hoja.getByRole("heading", { name: yaVencio ? "Atrasadas" : "Sin estimar" })).toBeVisible();
 
   // Abrir la tarea cierra la hoja y muestra el detalle.
   await hoja.getByRole("link", { name: datos.titulo }).click();
