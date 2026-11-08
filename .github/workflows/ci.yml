@@ -1,0 +1,127 @@
+# CI de Ingenia PM: lint, tipos, tests SQL, Vitest, build y e2e de Playwright en cada pull
+# request y en main. Sin secretos: la base es Supabase local, levantada en el runner.
+# Qué corre y cómo leer una falla: docs/ci.md
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# Una corrida nueva del mismo pull request o rama cancela la anterior.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+
+jobs:
+  # Rápido y sin base: avisa en un par de minutos si hay un error de estilo o de tipos.
+  calidad:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      # Valores de relleno: lint y tipos no se conectan a nada.
+      NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:55321"
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "sin-clave-en-ci"
+    steps:
+      - name: Bajar el código
+        uses: actions/checkout@v4.2.2
+
+      - name: Preparar Node
+        uses: actions/setup-node@v4.4.0
+        with:
+          node-version: "24"
+          cache: npm
+
+      # Nunca `npm install`: ver README (con estas dependencias borra binarios del lock).
+      - name: Instalar dependencias
+        run: npm ci --no-audit
+
+      - name: Lint
+        run: npm run lint
+
+      # Sin esto typecheck puede fallar en un clon limpio: Next genera tipos en .next/types.
+      - name: Generar los tipos de Next
+        run: npx next typegen
+
+      - name: Tipos
+        run: npm run typecheck
+
+  # Todo lo que necesita la base: migraciones, tests SQL, Vitest, build y e2e.
+  base:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - name: Bajar el código
+        uses: actions/checkout@v4.2.2
+
+      - name: Preparar Node
+        uses: actions/setup-node@v4.4.0
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci --no-audit
+
+      # Aplica las 8 migraciones y el seed (supabase/seed). Puertos 553xx de config.toml.
+      # Se dejan afuera los servicios que la app no usa, para arrancar más rápido.
+      - name: Levantar Supabase
+        run: npx supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,postgres-meta
+
+      # El mismo .env.local que arma el README a mano, con los datos de `supabase status`.
+      - name: Armar .env.local
+        run: |
+          npx supabase status -o env > "$RUNNER_TEMP/supabase.env"
+          valor() { grep -E "^$1=" "$RUNNER_TEMP/supabase.env" | head -n1 | cut -d= -f2- | tr -d '"'; }
+          anon="$(valor PUBLISHABLE_KEY)"; [ -n "$anon" ] || anon="$(valor ANON_KEY)"
+          secreta="$(valor SECRET_KEY)"; [ -n "$secreta" ] || secreta="$(valor SERVICE_ROLE_KEY)"
+          [ -n "$anon" ] && [ -n "$secreta" ] || { echo "No encontré las claves en supabase status"; exit 1; }
+          {
+            echo "NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:55321"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$anon"
+            echo "SUPABASE_SECRET_KEY=$secreta"
+            echo "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:55322/postgres"
+          } > .env.local
+          rm "$RUNNER_TEMP/supabase.env"
+
+      # Primero los SQL: cuentan filas del seed, que los e2e ensucian.
+      - name: Tests SQL
+        run: npm run test:sql
+
+      - name: Tests de Vitest
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Instalar Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Tests de punta a punta
+        run: npm run e2e
+
+      - name: Guardar el reporte de Playwright
+        if: failure()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: reporte-playwright
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Registros de Supabase si algo falló
+        if: failure()
+        run: docker ps -a --format '{{.Names}} {{.Status}}'
+
+      - name: Bajar Supabase
+        if: always()
+        run: npx supabase stop --no-backup
