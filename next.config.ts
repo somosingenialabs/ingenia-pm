@@ -39,6 +39,8 @@ const csp = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  // Servidor mínimo para la imagen Docker (ver Dockerfile y docs/despliegue.md).
+  output: "standalone",
   async headers() {
     return [
       {
