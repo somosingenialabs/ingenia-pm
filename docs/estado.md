@@ -2,7 +2,7 @@
 
 Cada fase, al cerrar, actualiza este archivo. Es lo único que la sesión siguiente lee de la anterior: tiene que alcanzar.
 
-**Fase siguiente:** ninguna. Las 5 fases del plan están hechas. Lo que queda es salir a producción: ver "Pendientes abiertos".
+**Fase siguiente:** 6, producción en Netlify + Supabase (`docs/fases/fase_6_netlify_supabase.md`), sesión A. Reemplaza el plan de la VM de Oracle: ver `docs/decisiones/0001-netlify-supabase.md`. Hasta que la fase 6 lo reescriba, lo de la VM en "Pendientes abiertos" y en `docs/despliegue.md` está desactualizado.
 
 | Fase | Estado | Fecha | Notas para la que sigue |
 |---|---|---|---|
