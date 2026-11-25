@@ -2,7 +2,7 @@
 
 Cada fase, al cerrar, actualiza este archivo. Es lo único que la sesión siguiente lee de la anterior: tiene que alcanzar.
 
-**Fase siguiente:** ninguna. Las 5 fases del plan están hechas. Lo que queda es salir a producción: ver "Pendientes abiertos".
+**Fase siguiente:** 6, producción en Netlify + Supabase (`docs/fases/fase_6_netlify_supabase.md`), sesión B (staging). Necesita antes: cuentas de Netlify y Supabase, y acceso de Netlify a la org `somosingenialabs` de GitHub. La sesión A dejó el repo listo en la rama `deploy/netlify-supabase` (sin commitear al cierre). Lo de la VM en `docs/despliegue.md` sigue desactualizado hasta la sesión C.
 
 | Fase | Estado | Fecha | Notas para la que sigue |
 |---|---|---|---|
@@ -11,6 +11,7 @@ Cada fase, al cerrar, actualiza este archivo. Es lo único que la sesión siguie
 | 3. UI base y Bento | Terminada | 2026-11-02 | Ver "Disponible desde la fase 3". Comentarios: completá `SeccionComentarios` en `src/components/tareas/secciones-reservadas.tsx`. El tablero ya tiene `useOptimistic` en `vistas-proyecto.tsx`: realtime tiene que refrescar esos datos, no pisarlos. Sumá tarjetas solo en `TARJETAS_INICIO` |
 | 4. Calendario y realtime | Terminada | 2026-11-04 | Ver "Disponible desde la fase 4". Horas: completá `SeccionTiempo` en `src/components/tareas/secciones-reservadas.tsx`, que es lo único que queda ahí. `analitica.carga_por_persona` ya existe en el esquema `analitica`: las métricas nuevas van al lado. Para escuchar una tabla en vivo usá `useCanalRealtime`, y sumá la tabla a la publicación `supabase_realtime` en una migración. `/horas` y `/analitica` siguen en `SIN_PANTALLA` de `navegacion.ts` |
 | 5. Horas y analítica | Terminada | 2026-11-06 | Ver "Disponible desde la fase 5". Ya está en `main`. Para una métrica nueva: función en `analitica` con su caso en `supabase/tests/metricas.test.sql`, lectura en `src/lib/data/analitica/consultas.ts` y tarjeta en `tarjetas-analitica.tsx` |
+| 6. Netlify + Supabase | Sesión A terminada | 2026-11-24 | Sin `output: "standalone"`, con `netlify.toml` (build `npm run build`, Node 24). Se borraron `Dockerfile`, `.dockerignore`, `infra/` y `.gitattributes` (solo existía por esos archivos). Siguen B (staging) y C (producción) |
 
 ## Disponible desde la fase 2
 
@@ -176,13 +177,20 @@ Lo que se hizo distinto a lo que dice la fase, y por qué.
 - **El seed 30** ahora crea las tareas hechas una semana antes de cerrarlas: el lead daba negativo. El seed 40 les arma el historial.
 - **Tests tocados:** `e2e/auth.spec.ts` y los SQL `dominio` y `roles` cuentan solo lo del seed 30. El e2e del teclado espera los avisos de dnd-kit (fallaba 1 de cada 5). El de 44 px y sin scroll horizontal ahora recorre `/horas` y `/analitica`.
 
+**Fase 6, sesión A**
+
+- **`netlify.toml` tal cual lo pide la fase**, sin `publish` ni plugin: la guía de Netlify para Next.js (actualizada el 2026-02-04) dice que el adaptador se configura solo desde Next 13.5 y recomienda no fijar su versión. No nombra Next 16 ni `proxy.ts`: se confirma en el primer build de la sesión B.
+- **`next build` frena una vez por un aviso de seguridad de Next.** `npm audit` marca `next` 16.0.0 a 16.4.4 con 7 avisos moderados (caché con `use cache`, imágenes SVG, cookies en Edge). El arreglo es 16.4.6, un parche. No se actualizó: la fase no suma dependencias. Al reintentar, el build sigue con un aviso y termina en verde.
+- **`src/app/manifest.ts` conserva `display: "standalone"`:** es el modo de pantalla de la app instalada en el celular, no la salida de Next.
+
 ## Pendientes abiertos
 
 - **Para salir a producción:**
-  - **Despliegue:** sería en una VM de Oracle. [FALTA: definir la base de datos de producción.] La app ya tiene `output: "standalone"` y `Dockerfile` (sin probar en una VM). Guía completa en `docs/despliegue.md`. [FALTA: dominio y HTTPS.]
+  - **Despliegue:** Netlify + Supabase en la nube (decisión 0001). El repo ya está adaptado (fase 6, sesión A). Faltan las sesiones B y C. [FALTA: dominio y HTTPS.]
+  - **Next 16.4.2 tiene avisos de seguridad moderados.** Decidir si se sube a 16.4.6 antes de producción (cambio de dependencia: pedirlo antes). Confirmar en la sesión B si el aviso corta el build de Netlify.
   - **SMTP:** [FALTA: SMTP de producción, para recuperar contraseña e invitaciones.] Volver `email_sent` y `sign_in_sign_ups` de `config.toml` a valores de producción.
   - **Primer Admin real:** [FALTA: quién es y qué proyectos se cargan al arrancar.] Sin seed: lo de `supabase/seed/` es solo de desarrollo.
-  - **Respaldos:** [FALTA: frecuencia, dónde se guardan y correr la prueba de restaurar una vez con datos reales.] Los scripts están en `infra/` y no se ejecutaron.
+  - **Respaldos:** [FALTA: frecuencia, dónde se guardan y correr la prueba de restaurar una vez con datos reales.] Los scripts de `infra/` se borraron en la fase 6 (quedan en el commit `e4c93aa`): el respaldo propio se arma en la sesión C.
   - **Migraciones:** el orden está en `docs/despliegue.md`, paso 2. [FALTA: probarlo contra la base de producción.] `npm run test:sql` se corre contra una copia, nunca contra producción.
 - `docs/fases/fase_1_setup_auth.md` sigue diciendo `[auth.email] enable_signup = false`. No sirve: ver "Desvíos".
 - La tarjeta "Proyectos" del inicio muestra hasta 8 activos, sin enlace a "ver todos" adentro. Lo mismo "Próximos plazos": 8 tareas.
